@@ -3,6 +3,7 @@ from backend.database.db import db
 from backend.config import DB_USER, DB_HOST, DB_PASSWORD, DB_NAME, JWT_SECRET_KEY, PERSISTENT_DIR
 import os
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 from backend.routes.auth_routes import auth_bp
 from backend.routes.job_routes import job_bp
 from backend.routes.resume_routes import resume_bp
@@ -12,6 +13,9 @@ from backend.routes.chat_routes import chat_bp
 from backend.routes.mail_routes import mail_bp
 
 app = Flask(__name__)
+
+# Very important: Enable CORS so frontend domain can talk to backend domain!
+CORS(app)
 
 # Intelligent Database Configuration
 if DB_HOST and DB_USER and DB_PASSWORD and DB_NAME:

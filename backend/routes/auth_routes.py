@@ -17,16 +17,20 @@ def register():
         data["password"]
     ).decode("utf-8")
 
-    user = User(
-        username=data["username"],
-        email=data["email"],
-        password=hashed_password
-    )
+    try:
+        user = User(
+            username=data["username"],
+            email=data["email"],
+            password=hashed_password
+        )
 
-    db.session.add(user)
-    db.session.commit()
+        db.session.add(user)
+        db.session.commit()
 
-    return {"message": "User created"}
+        return {"message": "User created"}, 201
+    except Exception as e:
+        db.session.rollback()
+        return {"error": "User with that email or username already exists."}, 400
 
 
 @auth_bp.route("/login", methods=["POST"])
