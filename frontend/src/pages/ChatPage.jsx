@@ -37,7 +37,7 @@ export default function ChatPage() {
             setJobs(r.data)
             if (r.data.length > 0 && !selectedJob) handleSelectJob(r.data[0].id)
         })
-    }, [])
+    }, [selectedJob])
 
     useEffect(() => {
         if (selectedJob && messages.length > 0) {

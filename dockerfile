@@ -13,5 +13,5 @@ RUN playwright install --with-deps chromium
 # Copy the rest of the application code into the image container
 COPY . .
 
-# Finally, execute the backend app correctly as a python module from the working directory
-CMD ["python3", "-m", "backend.app"]
+# Finally, execute the backend app correctly using Gunicorn for production
+CMD ["gunicorn", "--bind=0.0.0.0:8000", "--timeout", "600", "backend.app:app"]

@@ -1,6 +1,9 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: '/' })
+// If deployed to Azure with a separate frontend/backend, the API url must be passed via env variables
+const api = axios.create({
+    baseURL: process.env.REACT_APP_API_URL || '/'
+})
 
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token')
