@@ -1,38 +1,34 @@
-import asyncio
-from playwright.async_api import async_playwright
+import requests
 from bs4 import BeautifulSoup
 import re
 
-async def scrape_job_async(url):
-
-    async with async_playwright() as p:
-
-        browser = await p.chromium.launch(headless=True)
-
-        context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        )
-
-        page = await context.new_page()
-
-        await page.goto(url, timeout=60000)
-
-        await page.wait_for_timeout(5000)
-
-        html = await page.content()
-
-        await browser.close()
-
-        return html
-
-
 def scrape_job(url):
-    html = asyncio.run(scrape_job_async(url))
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+    
+    try:
+        # We use a 15-second timeout and headers to bypass simple bot-checkers
+        res = requests.get(url, headers=headers, timeout=15)
+        res.raise_for_status()
 
-    soup = BeautifulSoup(html, "html.parser")
+        html = res.text
+        soup = BeautifulSoup(html, "html.parser")
+        
+        # Strip script and style elements
+        for script in soup(["script", "style"]):
+            script.extract()
+            
+        text = soup.get_text(separator=" ")
+        
+        # Remove excessive whitespace
+        text = re.sub(r"\s+", " ", text).strip()
+        
+        return text
 
-    text = soup.get_text(separator=" ")
-
-    text = re.sub(r"\s+", " ", text)
-
-    return text.strip()
+    except requests.RequestException as e:
+        print(f"Error scraping job URL {url}: {e}")
+        # Return empty string to trigger fallback to manual copy/paste in route
+        return ""
