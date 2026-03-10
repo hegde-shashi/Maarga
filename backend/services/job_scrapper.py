@@ -1,43 +1,28 @@
-import cloudscraper
-from bs4 import BeautifulSoup
 import re
+import requests
 
 def scrape_job(url):
     try:
-        # Create a Cloudscraper instance to mimic real browser TLS/Cyphers
-        scraper = cloudscraper.create_scraper(
-            browser={
-                'browser': 'chrome',
-                'platform': 'windows',
-                'desktop': True
-            }
-        )
+        # User requested to use the Jina Reader API exclusively
+        print(f"Loading URL using Jina Reader API: {url}")
         
-        # Add basic headers just in case
+        jina_url = f"https://r.jina.ai/{url}"
         headers = {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.5",
+            "Accept": "text/plain",
+            "X-Return-Format": "markdown" 
         }
         
-        # 15 second timeout to grab the site
-        res = scraper.get(url, headers=headers, timeout=15)
+        # We increase the timeout slightly because remote rendering takes time
+        res = requests.get(jina_url, headers=headers, timeout=20)
         res.raise_for_status()
 
-        html = res.text
-        soup = BeautifulSoup(html, "html.parser")
+        text = res.text
         
-        # Strip script and style elements
-        for script in soup(["script", "style", "noscript"]):
-            script.extract()
-            
-        text = soup.get_text(separator=" ")
-        
-        # Remove excessive whitespace
-        text = re.sub(r"\s+", " ", text).strip()
-        
-        return text
+        # Clean up excessive newlines and whitespace
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        return text.strip()
 
     except Exception as e:
-        print(f"Cloudscraper failed on {url}: {e}")
-        # Always return empty string when blocked, triggering the frontend manual copy/paste fallback gracefully
+        print(f"Jina Reader API failed on {url}: {e}")
+        # Always return empty string when blocked, triggering the manual fallback gracefully
         return ""

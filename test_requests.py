@@ -1,17 +1,32 @@
-import requests
-from bs4 import BeautifulSoup
+import cloudscraper
 import re
+from bs4 import BeautifulSoup
 
-url = "https://boards.greenhouse.io/openai/jobs/5208643003"
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
-}
-try:
-    res = requests.get(url, headers=headers, timeout=10)
-    print(res.status_code)
-    soup = BeautifulSoup(res.text, "html.parser")
-    text = soup.get_text(separator=" ")
-    text = re.sub(r"\s+", " ", text)
-    print(text[:200])
-except Exception as e:
-    print(e)
+def scrape_job(url):
+    try:
+        scraper = cloudscraper.create_scraper(
+            browser={
+                'browser': 'chrome',
+                'platform': 'windows',
+                'desktop': True
+            }
+        )
+        res = scraper.get(url, timeout=15)
+        res.raise_for_status()
+
+        html = res.text
+        soup = BeautifulSoup(html, "html.parser")
+        
+        for script in soup(["script", "style", "noscript"]):
+            script.extract()
+            
+        text = soup.get_text(separator=" ")
+        text = re.sub(r"\s+", " ", text).strip()
+        print(text[:200])
+        return text
+
+    except Exception as e:
+        print(f"Cloudscraper failed on {url}: {e}")
+        return ""
+
+scrape_job("https://www.google.com")

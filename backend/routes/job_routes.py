@@ -39,11 +39,11 @@ def parse_job():
     except Exception:
         return jsonify({"scrape_success": False, "message": "Could not scrape job page. Please paste job description."})
 
-    if not clean_html or any(phrase in clean_html.lower() for phrase in ["access denied", "don't have permission"]):
+    if not clean_html or any(phrase in clean_html.lower() for phrase in ["access denied", "don't have permission", "max challenge attempts"]):
         return jsonify({"scrape_success": False, "message": "Could not scrape job page. Please paste job description."})
 
     try:
-        llm = get_llm(data)
+        llm = get_llm(data, temperature=0.2)
         chain = job_description_prompt() | llm
         result = chain.invoke({"job_text": clean_html})
         parsed_data = parse_llm_response(result.content)
@@ -59,7 +59,7 @@ def parse_jd():
     jd   = data.get('job_description', '')
 
     try:
-        llm = get_llm(data)
+        llm = get_llm(data, temperature=0.2)
         chain = job_description_prompt() | llm
         result = chain.invoke({"job_text": jd})
         parsed_data = parse_llm_response(result.content)
