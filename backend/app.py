@@ -1,3 +1,11 @@
+# Apply SQLite3 monkey-patch for ChromaDB compatibility on older Linux environments (like Azure App Services)
+import sys
+try:
+    import pysqlite3
+    sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+except ImportError:
+    pass
+
 from flask import Flask
 from backend.database.db import db
 from backend.config import DB_USER, DB_HOST, DB_PASSWORD, DB_NAME, JWT_SECRET_KEY, PERSISTENT_DIR
