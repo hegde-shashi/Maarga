@@ -32,7 +32,9 @@ export default function Sidebar({ page, setPage, isOpen, setIsOpen, hidden, setH
 
 
 
-                <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', display: 'block', marginTop: '0.4rem', fontWeight: 600, textAlign: 'center' }}>Find Your Career Path</span>
+                <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', display: 'block', marginTop: '0.4rem', fontWeight: 600, textAlign: 'center' }}>
+                    Optimize Your Career Path
+                </span>
             </div>
 
 

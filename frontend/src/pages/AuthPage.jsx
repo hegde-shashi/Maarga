@@ -50,7 +50,7 @@ export default function AuthPage() {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Logo size={200} />
                     </div>
-                    <p style={{ color: 'var(--text-muted)' }}>Find Your Career Path</p>
+                    <p style={{ color: 'var(--text-muted)' }}>Optimize Your Career Path</p>
                 </div>
 
 
