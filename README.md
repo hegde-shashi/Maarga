@@ -1,0 +1,114 @@
+# 📄 Resume Analyser - AI-Powered Career Assistant
+
+## 🚀 Overview
+
+**Resume Analyser** is a sophisticated, AI-driven platform designed to bridge the gap between job seekers and their dream careers. By leveraging state-of-the-art Large Language Models (LLMs) and Vector Databases, this application provides deep insights into how well your resume matches specific job descriptions, identifies skill gaps, and offers actionable recommendations.
+
+## ✨ Key Features
+
+- **🔍 Intelligent Job Scraping**: Automatically fetch and parse job descriptions from various job boards to save time.
+- **📄 Advanced Resume Parsing**: Support for PDF and DOCX formats with high-fidelity text extraction.
+- **🤖 AI-Powered Analysis**: Deep comparison between your resume and job requirements using **Google Gemini**.
+- **💬 Interactive AI Chat**: Chat with your resume data and job context to get tailored career advice and interview preparation.
+- **📊 Skill Gap Identification**: Visualise exactly which skills you're missing for a specific role.
+- **🔐 Secure Authentication**: Robust JWT-based authentication to keep your personal career data private.
+- **📱 Responsive Dashboard**: A sleek, modern UI built with React that works beautifully across all devices.
+- **🔌 Chrome Extension**: A companion browser tool to analyze job descriptions directly from any webpage without leaving the job board.
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **Framework**: React.js
+- **Styling**: Vanilla CSS (Modern, Responsive Design)
+- **Icons**: Lucide React
+- **Routing**: React Router DOM
+- **Utilities**: Axios, React Hot Toast, React Markdown
+
+### Backend
+- **Framework**: Flask (Python)
+- **Database**: PostgreSQL (Production) / SQLite (Local)
+- **ORM**: SQLAlchemy
+- **Authentication**: JWT (JSON Web Tokens)
+- **AI Orchestration**: LangChain
+- **LLM**: Google Gemini
+- **Vector Store**: ChromaDB
+- **Embeddings**: Google Gemini Embeddings
+
+### Chrome Extension (Optional)
+- **Manifest Version**: V3
+- **Logic**: Vanilla JavaScript
+- **API Communication**: Cross-origin requests to the Flask backend
+- **Styling**: Custom CSS with a sleek, consistent UI
+
+## ⚙️ Installation & Setup
+
+### Prerequisites
+- Python 3.9+
+- Node.js 18+
+- Google Gemini API Key
+
+### Backend Setup
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r ../requirements.txt
+   ```
+4. Configure environment variables in `.env`:
+   ```env
+   GOOGLE_API_KEY=your_gemini_api_key
+   JWT_SECRET_KEY=your_secret_key
+   ```
+5. Run the server:
+   ```bash
+   python app.py
+   ```
+
+### Frontend Setup
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server:
+   ```bash
+   npm start
+   ```
+
+### Chrome Extension Setup
+1. Open your Chrome browser and navigate to `chrome://extensions/`.
+2. Enable **"Developer mode"** in the top right corner.
+3. Click **"Load unpacked"**.
+4. Select the `Extension` folder from this repository.
+5. The Resume Analyser icon should now appear in your browser toolbar.
+6. Make sure your local backend is running (`localhost:5001`) for the extension to interact with.
+
+## 🐳 Docker Deployment
+
+The project includes a `dockerfile` for easy containerization.
+```bash
+docker build -t resume-analyser .
+docker run -p 5001:5001 resume-analyser
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+*Built with ❤️ by Shashidhar Hegde*

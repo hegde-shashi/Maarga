@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Resume Analyzer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- LOGIN VIEW -->
+<div id="loginView" class="panel">
+
+    <h2>Login</h2>
+
+    <input
+        id="email"
+        type="text"
+        placeholder="Email"
+    />
+
+    <input
+        id="password"
+        type="password"
+        placeholder="Password"
+    />
+
+    <button id="loginBtn">
+        Login
+    </button>
+
+    <p id="loginError"></p>
+
+</div>
+
+
+
+<!-- MAIN EXTENSION VIEW -->
+<div id="appView" class="panel" style="display:none;">
+
+    <h2>Resume Analyzer</h2>
+    <p id="statusMessage" class="status" style="display:none;"></p>
+
+    <label for="modelSelect">Model</label>
+    <select id="modelSelect">
+        <option value="">Loading models...</option>
+    </select>
+    <p id="modelError"></p>
+
+    <button id="send">
+        Send Page To Analyzer
+    </button>
+
+    <!-- Loading Indicator -->
+    <div
+        id="loading"
+        class="loading"
+        style="display:none;"
+    >
+        Parsing job description...
+    </div>
+
+
+    <!-- Job Details -->
+    <div id="jobDetails" style="display:none;"></div>
+
+
+    <hr>
+
+
+    <!-- Analyse Section -->
+    <button id="analyse" style="display:none;">
+        Analyse Resume Match
+    </button>
+
+    <div id="analysis" style="display:none;"></div>
+
+
+    <hr>
+
+
+    <!-- Logout -->
+    <button id="logout">
+        Logout
+    </button>
+
+</div>
+
+
+<script src="popup.js"></script>
+
+</body>
+
+</html>

@@ -351,7 +351,13 @@ export default function JobsPage() {
     const { llmPayload } = useSettings()
 
     const load = () => api.get('/get_jobs').then(r => setJobs(r.data)).finally(() => setLoading(false))
-    useEffect(() => { load() }, [])
+    useEffect(() => { 
+        load()
+        if (sessionStorage.getItem('openAddJob') === 'true') {
+            setShowAdd(true)
+            sessionStorage.removeItem('openAddJob')
+        }
+    }, [])
 
     const remove = (id) => setJobs(js => js.filter(j => j.id !== id))
     const changeProgress = (id, progress) => setJobs(js => js.map(j => j.id === id ? { ...j, progress } : j))

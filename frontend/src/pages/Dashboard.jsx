@@ -102,13 +102,25 @@ export default function Dashboard({ setPage }) {
             <div className="card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <div className="card-title" style={{ margin: 0 }}>Recent Applications</div>
-                    <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => setPage('jobs')}
-                        style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                    >
-                        View all <ArrowRight size={13} />
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => {
+                                sessionStorage.setItem('openAddJob', 'true')
+                                setPage('jobs')
+                            }}
+                            style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--accent)' }}
+                        >
+                            + Add Job
+                        </button>
+                        <button
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => setPage('jobs')}
+                            style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                        >
+                            View all <ArrowRight size={13} />
+                        </button>
+                    </div>
                 </div>
 
                 {jobs.length === 0 ? (

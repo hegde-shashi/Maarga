@@ -43,7 +43,7 @@ def parse_job():
         return jsonify({"scrape_success": False, "message": "Could not scrape job page. Please paste job description."})
 
     try:
-        llm = get_llm(data, temperature=0.2)
+        llm = get_llm(data)
         chain = job_description_prompt() | llm
         result = chain.invoke({"job_text": clean_html})
         parsed_data = parse_llm_response(result.content)
@@ -59,7 +59,7 @@ def parse_jd():
     jd   = data.get('job_description', '')
 
     try:
-        llm = get_llm(data, temperature=0.2)
+        llm = get_llm(data)
         chain = job_description_prompt() | llm
         result = chain.invoke({"job_text": jd})
         parsed_data = parse_llm_response(result.content)

@@ -8,14 +8,28 @@ import ReactMarkdown from 'react-markdown'
 export default function ChatPage() {
     const { llmPayload } = useSettings()
     const [jobs, setJobs] = useState([])
-    const [selectedJob, setSelectedJob] = useState('')
+    const [selectedJob, setSelectedJob] = useState(() => localStorage.getItem('lastChatJobId') || '')
     const [messages, setMessages] = useState([])
     const [input, setInput] = useState('')
     const [loading, setLoading] = useState(false)
     const bottomRef = useRef()
+    const inputRef = useRef()
+
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.style.height = '24px'; // Reset height
+            const scrollHeight = inputRef.current.scrollHeight;
+            // Cap at ~4 lines (approx 100px given 24px base and 1.4 line-height)
+            inputRef.current.style.height = Math.min(scrollHeight, 100) + 'px';
+        }
+    }, [input])
 
     function handleSelectJob(newJobId) {
-        setSelectedJob(newJobId)
+        const id = String(newJobId)
+        setSelectedJob(id)
+        if (id) {
+            localStorage.setItem('lastChatJobId', id)
+        }
         if (!newJobId) {
             setMessages([])
             return
@@ -35,9 +49,17 @@ export default function ChatPage() {
     useEffect(() => {
         api.get('/get_jobs').then(r => {
             setJobs(r.data)
-            if (r.data.length > 0 && !selectedJob) handleSelectJob(r.data[0].id)
+            const savedId = localStorage.getItem('lastChatJobId')
+            const exists = r.data.find(j => String(j.id) === String(savedId))
+            
+            // If we have a valid saved job, always call handleSelectJob to load messages
+            if (exists) {
+                handleSelectJob(savedId)
+            } else if (r.data.length > 0) {
+                handleSelectJob(r.data[0].id)
+            }
         })
-    }, [selectedJob])
+    }, [])
 
     useEffect(() => {
         if (selectedJob && messages.length > 0) {
@@ -132,13 +154,13 @@ export default function ChatPage() {
                         style={{
                             padding: '0.75rem',
                             borderRadius: 'var(--radius-md)',
-                            background: selectedJob === j.id ? 'var(--accent-glow)' : 'transparent',
-                            border: selectedJob === j.id ? '1px solid var(--accent)' : '1px solid transparent',
+                            background: String(selectedJob) === String(j.id) ? 'var(--accent-glow)' : 'transparent',
+                            border: String(selectedJob) === String(j.id) ? '1px solid var(--accent)' : '1px solid transparent',
                             cursor: 'pointer',
                             transition: 'all var(--transition)'
                         }}
                     >
-                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: selectedJob === j.id ? 'var(--accent)' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.company}</div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: String(selectedJob) === String(j.id) ? 'var(--accent)' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{j.company}</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '2px' }}>{j.job_title}</div>
                     </div>
                 ))}
@@ -160,7 +182,7 @@ export default function ChatPage() {
                 </div>
 
                 <div className="chat-container hide-scrollbar" style={{ margin: 0, border: 'none', background: 'transparent', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                    <div className="chat-messages hide-scrollbar" style={{ background: 'transparent', border: 'none', padding: '0 0.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div className="chat-messages hide-scrollbar" style={{ background: 'transparent', border: 'none', flex: 1, display: 'flex', flexDirection: 'column' }}>
                         {!job ? (
                             <div className="empty-state" style={{ margin: 'auto', padding: '2rem' }}>
                                 <Bot size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.3 }} />
@@ -229,31 +251,73 @@ export default function ChatPage() {
                         <div ref={bottomRef} style={{ height: 1 }} />
                     </div>
 
-                    <div style={{ padding: '1rem 0 0' }}>
+                    <div style={{ padding: '1rem 0 0', position: 'relative' }}>
+                        {/* Slash Command Suggestions */}
+                        {input.startsWith('/') && input.length === 1 && (
+                            <div className="command-suggestions" style={{
+                                position: 'absolute', bottom: '100%', left: '1.25rem', marginBottom: '0.5rem',
+                                background: 'var(--bg-card)', backdropFilter: 'blur(10px)',
+                                border: '1px solid var(--border)', borderRadius: '12px', padding: '0.5rem',
+                                boxShadow: '0 8px 32px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column',
+                                gap: '2px', minWidth: '180px', zIndex: 100, animation: 'slideUp 0.2s ease-out'
+                            }}>
+                                <div 
+                                    onClick={() => setInput('/interview ')}
+                                    style={{
+                                        padding: '0.6rem 0.75rem', borderRadius: '8px', cursor: 'pointer',
+                                        transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px'
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-glow)'}
+                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                >
+                                    <span style={{ fontStyle: 'italic', fontWeight: 700, color: 'var(--accent)', fontSize: '0.9rem' }}>/interview</span>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Start mock interview</span>
+                                </div>
+                                <div 
+                                    onClick={() => setInput('/normal ')}
+                                    style={{
+                                        padding: '0.6rem 0.75rem', borderRadius: '8px', cursor: 'pointer',
+                                        transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px'
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-glow)'}
+                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                >
+                                    <span style={{ fontWeight: 800, fontFamily: 'monospace', color: 'var(--text-primary)', fontSize: '0.9rem', background: 'var(--border)', padding: '1px 4px', borderRadius: '4px' }}>/normal</span>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Regular chat mode</span>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="chat-center-wrapper" style={{
                             display: 'flex', alignItems: 'flex-end', gap: '0.5rem',
                             background: 'var(--bg-card)', border: '1px solid var(--border)',
                             borderRadius: '24px', padding: '0.5rem 0.5rem 0.5rem 1.25rem',
                             boxShadow: 'var(--shadow-md)'
                         }}>
-                            <textarea
-                                className="hide-scrollbar"
-                                placeholder={job ? 'Chat With AI' : 'Select a job first'}
-                                value={input}
-                                onChange={e => setInput(e.target.value)}
-                                disabled={!job || loading}
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
-                                }}
-                                style={{
-                                    flex: 1, border: 'none', background: 'transparent', outline: 'none',
-                                    padding: '0.6rem 0', minHeight: '24px', maxHeight: '150px', resize: 'none',
-                                    fontFamily: 'inherit', fontSize: '0.95rem', color: 'var(--text-primary)',
-                                    lineHeight: 1.4, overflowY: 'auto'
-                                }}
-                                rows={1}
-                            />
-                            <button className="btn btn-primary btn-icon" onClick={send} disabled={!job || loading || !input.trim()} style={{ borderRadius: '50%', padding: '0.7rem', flexShrink: 0, alignSelf: 'flex-end', marginBottom: '4px' }}>
+                            <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                <textarea
+                                    ref={inputRef}
+                                    className="hide-scrollbar"
+                                    placeholder={job ? 'Chat With AI (use / for commands)' : 'Select a job first'}
+                                    value={input}
+                                    onChange={e => setInput(e.target.value)}
+                                    disabled={!job || loading}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+                                    }}
+                                    style={{
+                                        flex: 1, border: 'none', background: 'transparent', outline: 'none',
+                                        padding: '0.6rem 0', minHeight: '24px', maxHeight: '150px', resize: 'none',
+                                        fontFamily: 'inherit', fontSize: '0.95rem', 
+                                        color: input.startsWith('/interview') ? 'var(--accent)' : 'var(--text-primary)',
+                                        fontStyle: input.startsWith('/interview') ? 'italic' : 'normal',
+                                        fontWeight: input.startsWith('/normal') ? '700' : 'normal',
+                                        lineHeight: 1.4, overflowY: 'auto'
+                                    }}
+                                    rows={1}
+                                />
+                            </div>
+                            <button className="btn btn-primary btn-icon" onClick={send} disabled={!job || loading || !input.trim()} style={{ borderRadius: '50%', padding: '0.7rem', flexShrink: 0, alignSelf: 'flex-end'}}>
                                 <Send size={18} />
                             </button>
                         </div>

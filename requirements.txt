@@ -19,6 +19,9 @@ langchain-community==0.4.1
 langchain-text-splitters==1.1.1
 langchain-classic==1.0.2
 
+# ── LangGraph (Agents & Workflows) ─────────────────────────────────
+langgraph==0.3.0
+
 # ── LangChain Google Gemini ────────────────────────────────────────
 langchain-google-genai==4.2.1
 google-genai==1.66.0

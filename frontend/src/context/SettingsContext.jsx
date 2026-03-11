@@ -4,12 +4,24 @@ import api from '../api'
 const SettingsContext = createContext(null)
 
 export function SettingsProvider({ children }) {
-    const [apiMode, setApiMode] = useState('default')     // 'default' | 'user'
-    const [apiKey, setApiKey] = useState('')             // only used when mode='user'
-    const [model, setModel] = useState('')             // selected model name
+    const [apiMode, setApiMode] = useState(() => sessionStorage.getItem('apiMode') || 'default')
+    const [apiKey, setApiKey] = useState(() => sessionStorage.getItem('apiKey') || '')
+    const [model, setModel] = useState(() => sessionStorage.getItem('model') || '')
     const [models, setModels] = useState([])             // available models list
     const [loadingModels, setLoadingModels] = useState(false)
     const [showKeyModal, setShowKeyModal] = useState(false)
+
+    useEffect(() => {
+        sessionStorage.setItem('apiMode', apiMode)
+    }, [apiMode])
+
+    useEffect(() => {
+        sessionStorage.setItem('apiKey', apiKey)
+    }, [apiKey])
+
+    useEffect(() => {
+        sessionStorage.setItem('model', model)
+    }, [model])
 
     const fetchModels = useCallback(async (mode, key) => {
         setLoadingModels(true)
@@ -30,8 +42,11 @@ export function SettingsProvider({ children }) {
         }
     }, [model])
 
-    // fetch models on mount with default key
-    useEffect(() => { fetchModels('default', '') }, [fetchModels])
+    // fetch models on mount with saved settings
+    useEffect(() => { 
+        fetchModels(apiMode, apiKey) 
+        // eslint-disable-next-line
+    }, [fetchModels])
 
     // Build the LLM payload to attach to every API call
     const llmPayload = {
