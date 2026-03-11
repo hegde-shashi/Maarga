@@ -1,6 +1,9 @@
 import { useAuth } from '../context/AuthContext'
 import { LayoutDashboard, FileText, Briefcase, MessageSquare, LogOut, Settings } from 'lucide-react'
 import { ModelSelector, ApiModeToggle } from './AIOptions'
+import Logo from './Logo'
+
+
 
 const NAV = [
     { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
@@ -20,12 +23,18 @@ export default function Sidebar({ page, setPage, isOpen, setIsOpen, hidden, setH
     return (
         <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
             <div className="sidebar-logo">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h1 style={{ background: 'linear-gradient(90deg, var(--text-primary), var(--accent))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1.1 }}>Resume<br />Analyser</h1>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <Logo size={200} />
+                    </div>
                     <button className="btn btn-ghost btn-sm mobile-only" onClick={() => setIsOpen(false)}>✕</button>
                 </div>
-                <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', display: 'block', marginTop: '0.4rem', fontWeight: 600 }}>Your AI Career Partner</span>
+
+
+
+                <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', display: 'block', marginTop: '0.4rem', fontWeight: 600, textAlign: 'center' }}>Find Your Career Path</span>
             </div>
+
 
             <nav className="sidebar-nav">
                 <div className="nav-section-label">Navigation</div>

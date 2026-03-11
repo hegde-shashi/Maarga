@@ -590,9 +590,11 @@ function AnalysisResult({ raw }) {
                         {typeof summary === 'string' || Array.isArray(summary) ? (
                             <ReactMarkdown>
                                 {typeof summary === 'string'
-                                    ? summary.replace(/\\n/g, '\n').replace(/^\s*[*-]\s*(?=\*\*)/gm, '')
+                                    ? summary.replace(/\\n/g, '\n').replace(/^\s*[*-]\s*(?=\*\*)/gm, '\n')
+
                                     : summary.map(s => String(s).replace(/^\s*[*-]\s*/, '')).join('\n\n')
                                 }
+
                             </ReactMarkdown>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>

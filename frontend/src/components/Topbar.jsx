@@ -2,6 +2,7 @@ import { useTheme } from '../context/ThemeContext'
 import { useSettings } from '../context/SettingsContext'
 import { Sun, Moon, Menu, PanelLeftOpen, PanelLeftClose } from 'lucide-react'
 import { ApiKeyModal, ModelSelector, ApiModeToggle } from './AIOptions'
+import Logo from './Logo'
 
 export default function Topbar({ pageTitle, setSidebarOpen, sidebarHidden, setSidebarHidden }) {
     const { theme, toggle } = useTheme()
@@ -34,10 +35,16 @@ export default function Topbar({ pageTitle, setSidebarOpen, sidebarHidden, setSi
                             <PanelLeftClose size={20} />
                         </button>
                     )}
-                    <span className="topbar-title" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {/* <span className="topbar-title" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {pageTitle}
-                    </span>
+                    </span> */}
+                    <a href="/dashboard">
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', paddingTop: '0.5rem', justifyContent: 'center' }}>
+                            <Logo size={75} />
+                        </span>
+                    </a>
                 </div>
+
 
                 <div className="topbar-actions">
                     <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

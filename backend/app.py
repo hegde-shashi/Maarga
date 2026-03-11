@@ -10,7 +10,9 @@ from flask import Flask
 from backend.database.db import db
 from backend.config import DB_USER, DB_HOST, DB_PASSWORD, DB_NAME, JWT_SECRET_KEY, PERSISTENT_DIR
 import os
+from datetime import timedelta
 from flask_jwt_extended import JWTManager
+
 from flask_cors import CORS
 from backend.routes.auth_routes import auth_bp
 from backend.routes.job_routes import job_bp
@@ -37,6 +39,9 @@ else:
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=30)
+
+
 
 db.init_app(app)
 

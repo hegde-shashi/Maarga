@@ -1,19 +1,22 @@
-# 📄 Resume Analyser - AI-Powered Career Assistant
+# <img src="assets/images/logo.png" width="45" style="border-radius: 8px; vertical-align: middle; margin-right: 12px;"/> Maarga - Optimize Your Career Path
+
+
 
 ## 🚀 Overview
 
-**Resume Analyser** is a sophisticated, AI-driven platform designed to bridge the gap between job seekers and their dream careers. By leveraging state-of-the-art Large Language Models (LLMs) and Vector Databases, this application provides deep insights into how well your resume matches specific job descriptions, identifies skill gaps, and offers actionable recommendations.
+**Maarga** is a sophisticated, AI-driven platform designed to bridge the gap between job seekers and their dream careers. By leveraging state-of-the-art Large Language Models (LLMs) and Vector Databases, this application provides deep insights into how well your resume matches specific job descriptions, identifies skill gaps, and offers actionable recommendations.
+
 
 ## ✨ Key Features
 
-- **🔍 Intelligent Job Scraping**: Automatically fetch and parse job descriptions from various job boards to save time.
-- **📄 Advanced Resume Parsing**: Support for PDF and DOCX formats with high-fidelity text extraction.
-- **🤖 AI-Powered Analysis**: Deep comparison between your resume and job requirements using **Google Gemini**.
-- **💬 Interactive AI Chat**: Chat with your resume data and job context to get tailored career advice and interview preparation.
-- **📊 Skill Gap Identification**: Visualise exactly which skills you're missing for a specific role.
-- **🔐 Secure Authentication**: Robust JWT-based authentication to keep your personal career data private.
-- **📱 Responsive Dashboard**: A sleek, modern UI built with React that works beautifully across all devices.
-- **🔌 Chrome Extension**: A companion browser tool to analyze job descriptions directly from any webpage without leaving the job board.
+- **Intelligent Job Scraping**: Automatically fetch and parse job descriptions from various job boards to save time.
+- **Advanced Resume Parsing**: Support for PDF and DOCX formats with high-fidelity text extraction.
+- **AI-Powered Analysis**: Deep comparison between your resume and job requirements using **Google Gemini**.
+- **Interactive AI Chat**: Chat with your resume data and job context to get tailored career advice and interview preparation.
+- **Skill Gap Identification**: Visualise exactly which skills you're missing for a specific role.
+- **Secure Authentication**: Robust JWT-based authentication to keep your personal career data private.
+- **Responsive Dashboard**: A sleek, modern UI built with React that works beautifully across all devices.
+- **Chrome Extension**: A companion browser tool to analyze job descriptions directly from any webpage without leaving the job board.
 
 ## 🛠️ Tech Stack
 
@@ -111,13 +114,10 @@ The application is optimized for deployment on **Azure App Service**.
 3. **Environment Variables**: Configure the following in the App Service "Configuration" settings:
    - `GOOGLE_API_KEY`: Your Gemini API key.
    - `JWT_SECRET_KEY`: Your JWT secret.
-   - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`: (Optional) PostgreSQL credentials.
+   - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`: (Optional) for PostgreSQL credentials.
 4. **SQLite Compatibility**: The backend includes a `pysqlite3` monkey-patch to ensure compatibility with ChromaDB on Azure's Linux environments.
 5. **Persistent Storage**: Ensure you configure a persistent storage mount if using SQLite to keep your data across restarts.
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📝 License
 

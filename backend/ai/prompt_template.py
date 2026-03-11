@@ -84,36 +84,17 @@ def compare_prompt(resume, job_description):
                 {clean(job_description)}
 
                 OUTPUT FORMAT
+                Return ONLY a valid JSON object with the following keys. Do not include any preamble or extra text.
 
-                Return the result in the following structured JSON Format, no preamble:
+                {
+                    "score": <number 0-100>,
+                    "matched_skills": ["skill 1", "skill 2", ...],
+                    "missing_skills": ["skill 1", "skill 2", ...],
+                    "suggestions": ["suggestion 1", "suggestion 2", ...],
+                    "evaluation_summary": "- **Experience Match (<score>/30):** <explanation>\\n- **Skill Match (<score>/40):** <explanation>\\n- **Work / Project Relevance (<score>/20):** <explanation>\\n- **Resume Quality (<score>/10):** <explanation>"
+                }
 
-                score: <number between 0 and 100>
 
-                matched_skills:
-
-                * skill 1
-                * skill 2
-                * skill 3
-
-                missing_skills:
-
-                * skill 1
-                * skill 2
-                * skill 3
-
-                suggestions:
-
-                * suggestion 1
-                * suggestion 2
-                * suggestion 3
-
-                evaluation_summary:
-
-                * Explain score for each criteria 
-                * **Experience Match <score> :** details \n 
-                * **Skill Match <score> :** details \n
-                * **Work / Project Match <score> :** details \n 
-                * **Resume Quality <score> :** details.
 
                 Important Rules:
 

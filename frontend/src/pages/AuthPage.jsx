@@ -3,7 +3,10 @@ import { useAuth } from '../context/AuthContext'
 import api from '../api'
 import toast from 'react-hot-toast'
 import { useTheme } from '../context/ThemeContext'
-import { Sun, Moon, FileText } from 'lucide-react'
+import { Sun, Moon } from 'lucide-react'
+import Logo from '../components/Logo'
+
+
 
 export default function AuthPage() {
     const { login } = useAuth()
@@ -43,15 +46,13 @@ export default function AuthPage() {
             </div>
 
             <div className="auth-card">
-                <div className="auth-logo">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                        <div style={{ background: 'var(--accent)', borderRadius: '10px', padding: '8px', display: 'flex' }}>
-                            <FileText size={22} color="#fff" />
-                        </div>
+                <div className="auth-logo" style={{ marginBottom: '2.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Logo size={200} />
                     </div>
-                    <h1>Resume Analyser</h1>
-                    <p>AI-powered job application assistant</p>
+                    <p style={{ color: 'var(--text-muted)' }}>Find Your Career Path</p>
                 </div>
+
 
                 <div className="tabs" style={{ margin: '0 auto 1.5rem', display: 'flex' }}>
                     <button className={`tab ${mode === 'login' ? 'active' : ''}`} onClick={() => setMode('login')}>Sign In</button>
