@@ -101,6 +101,20 @@ docker build -t resume-analyser .
 docker run -p 5001:5001 resume-analyser
 ```
 
+## ☁️ Azure Deployment
+
+The application is optimized for deployment on **Azure App Service**.
+
+### Deployment Steps:
+1. **Container Registry**: Push the Docker image to Azure Container Registry (ACR).
+2. **App Service**: Create a New "Web App for Containers" in the Azure Portal.
+3. **Environment Variables**: Configure the following in the App Service "Configuration" settings:
+   - `GOOGLE_API_KEY`: Your Gemini API key.
+   - `JWT_SECRET_KEY`: Your JWT secret.
+   - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`: (Optional) PostgreSQL credentials.
+4. **SQLite Compatibility**: The backend includes a `pysqlite3` monkey-patch to ensure compatibility with ChromaDB on Azure's Linux environments.
+5. **Persistent Storage**: Ensure you configure a persistent storage mount if using SQLite to keep your data across restarts.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
