@@ -12,6 +12,8 @@ from backend.config import DB_USER, DB_HOST, DB_PASSWORD, DB_NAME, JWT_SECRET_KE
 import os
 from datetime import timedelta
 from flask_jwt_extended import JWTManager
+import threading
+from backend.services.job_processor import process_pending_jobs
 
 from flask_cors import CORS
 from backend.routes.auth_routes import auth_bp
@@ -65,6 +67,21 @@ def check_migrations():
             db.session.execute(text('ALTER TABLE "user" ADD COLUMN reset_token_expiry TIMESTAMP'))
             db.session.commit()
 
+    # Check for missing columns in 'jobs' table
+    if "jobs" in inspector.get_table_names():
+        columns = [c["name"] for c in inspector.get_columns("jobs")]
+        
+        if "is_parsed" not in columns:
+            print("Migration: Adding is_parsed to jobs table...")
+            # Boolean in SQLite is 0/1, in Postgres it's BOOLEAN
+            db.session.execute(text('ALTER TABLE jobs ADD COLUMN is_parsed BOOLEAN DEFAULT FALSE'))
+            db.session.commit()
+            
+        if "raw_content" not in columns:
+            print("Migration: Adding raw_content to jobs table...")
+            db.session.execute(text('ALTER TABLE jobs ADD COLUMN raw_content TEXT'))
+            db.session.commit()
+
 with app.app_context():
     db.create_all()
     try:
@@ -84,4 +101,11 @@ app.register_blueprint(chat_bp)
 app.register_blueprint(mail_bp)
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    import os
+    # Start the background worker thread only in the main process (not the reloader child)
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        worker = threading.Thread(target=process_pending_jobs, args=(app,), daemon=True)
+        worker.start()
+        print("Background worker started.")
+        
+    app.run(debug=True, port=5001, use_reloader=True)

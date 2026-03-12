@@ -18,4 +18,6 @@ class Jobs(db.Model):
     education = db.Column(db.Text)
     job_type = db.Column(db.String(200))
     progress = db.Column(db.String(50))
+    is_parsed = db.Column(db.Boolean, default=False)
+    raw_content = db.Column(db.Text)
     created_at = db.Column(db.DateTime, server_default=db.func.now())

@@ -8,9 +8,9 @@ def resume_check(text):
 
             Return ONLY JSON:
 
-            {
+            {{
                 "is_resume": true or false
-            }
+            }}
 
             Document:
             {text}
@@ -44,151 +44,145 @@ def job_description_prompt():
 
 
 def compare_prompt(resume, job_description):
-    return f"""
-                You are an AI recruitment assistant. Compare the candidate's resume with the job description and evaluate how well the candidate matches the role.
 
-                Follow this evaluation logic strictly:
+    prompt = ChatPromptTemplate.from_template(
+        """
+            You are an AI recruitment assistant. Compare the candidate's resume with the job description and evaluate how well the candidate matches the role.
 
-                SCORING CRITERIA (Total = 100)
+            SCORING CRITERIA (Total = 100)
 
-                1. Experience Match — 30%
+            1. Experience Match — 30%
 
-                * Compare the years of experience required in the job description with the candidate's experience.
-                * If the difference between required and actual experience is greater than 3 years, treat this as a **senior role mismatch** and give a very low experience score (0–5).
-                * If the experience approximately matches, score normally.
+            * Compare the years of experience required in the job description with the candidate's experience.
+            * If the difference between required and actual experience is greater than 3 years, treat this as a senior role mismatch and give a very low experience score (0–5).
 
-                2. Skills Match — 40%
+            2. Skills Match — 40%
 
-                * Compare technical skills mentioned in the job description with those in the resume.
-                * Count both exact matches and closely related technologies.
-                * Give higher scores when most required skills are present.
+            * Compare technical skills mentioned in the job description with those in the resume.
 
-                3. Work / Project Relevance — 20%
+            3. Work / Project Relevance — 20%
 
-                * Evaluate whether the candidate's work experience and projects are relevant to the job description.
-                * Consider the complexity, impact, and domain similarity.
+            4. Resume Quality — 10%
 
-                4. Resume Quality — 10%
-                Evaluate:
+            INPUT DATA
 
-                * Resume structure and clarity
-                * Grammar and spelling
-                * Professional formatting
+            Resume:
+            {resume}
 
-                INPUT DATA
+            Job Description:
+            {job_description}
 
-                Resume:
-                {clean(resume)}
+            OUTPUT FORMAT
+                    Return ONLY valid JSON:
+                        "score": <number 0-100>,
+                        "matched_skills": ["skill 1", "skill 2"],
+                        "missing_skills": ["skill 1", "skill 2"],
+                        "suggestions": ["suggestion 1", "suggestion 2"],
+                        "evaluation_summary": "- **Experience Match (<score>/30):** <explanation>\\n- **Skill Match (<score>/40):** <explanation>\\n- **Work / Project Relevance (<score>/20):** <explanation>\\n- **Resume Quality (<score>/10):** <explanation>"
+        """
+    )
 
-                Job Description:
-                {clean(job_description)}
-
-                OUTPUT FORMAT
-                Return ONLY a valid JSON object with the following keys. Do not include any preamble or extra text.
-
-                {
-                    "score": <number 0-100>,
-                    "matched_skills": ["skill 1", "skill 2", ...],
-                    "missing_skills": ["skill 1", "skill 2", ...],
-                    "suggestions": ["suggestion 1", "suggestion 2", ...],
-                    "evaluation_summary": "- **Experience Match (<score>/30):** <explanation>\\n- **Skill Match (<score>/40):** <explanation>\\n- **Work / Project Relevance (<score>/20):** <explanation>\\n- **Resume Quality (<score>/10):** <explanation>"
-                }
-
-
-
-                Important Rules:
-
-                * Be objective and realistic.
-                * Do not inflate the score.
-                * If experience mismatch is very large, reduce the score significantly.
-                * Focus on skills and real work evidence.
-
-            """
+    return prompt.format(
+        resume=resume,
+        job_description=job_description
+    )
 
 
 def mail_prompt(candidate_name, job_description, progress):
+    prompt = ChatPromptTemplate.from_template(
+        """
+        You are a professional career assistant helping a candidate manage their job applications.
 
-    return f"""
-                You are a professional career assistant helping a candidate manage their job applications.
+        Candidate:
+        {candidate_name}
 
-                Candidate:
-                {candidate_name}
+        Job details:
+        {job_description}
 
-                Job details:
-                {job_description}
+        Job progress:
+        {progress}
 
-                Job progress:
-                {progress}
+        Write a professional email appropriate for the application stage.
 
-                Write a professional email appropriate for the application stage.
+        Stage Guidelines:
 
-                Stage Guidelines:
+        Applied -> Write a polite follow-up email asking for an update.
 
-                Applied → Write a polite follow-up email asking for an update.
+        HR Interview -> Write a thank-you email after the HR interview.
 
-                HR Interview → Write a thank-you email after the HR interview.
+        Technical Interview -> Write a thank-you email appreciating the technical discussion.
 
-                Technical Interview → Write a thank-you email appreciating the technical discussion.
+        Final Round -> Write an email expressing appreciation and enthusiasm.
 
-                Final Round → Write an email expressing appreciation and enthusiasm.
+        Rejected -> Write a polite response thanking them and asking for feedback.
 
-                Rejected → Write a polite response thanking them and asking for feedback.
+        Offer -> Write a response expressing gratitude and interest in discussing offer details.
 
-                Offer → Write a response expressing gratitude and interest in discussing offer details.
-
-                Rules:
-                - Keep the email concise and professional
-                - Include a subject line
-                - Include greeting and closing
-                - Do not use placeholders
-                - Return only the email text
-            """
+        Rules:
+        - Keep the email concise and professional
+        - Include a subject line
+        - Include greeting and closing
+        - Do not use placeholders
+        - Return only the email text
+        """
+    )
+    return prompt.format(
+        candidate_name=candidate_name,
+        job_description=job_description,
+        progress=progress
+    )
 
 
 def cover_letter_prompt(candidate_name, resume, job_description):
-    return f"""
-                You are an expert career assistant specializing in writing strong cover letters for candidates transitioning into a new field.
+    prompt = ChatPromptTemplate.from_template(
+        """
+        You are an expert career assistant specializing in writing strong cover letters for candidates transitioning into a new field.
 
-                Write a professional cover letter tailored to the job description.
+        Write a professional cover letter tailored to the job description.
 
-                Candidate Information:
-                Name: {candidate_name}
+        Candidate Information:
+        Name: {candidate_name}
 
-                Background:
-                The candidate is transitioning into the field of Data Science / Machine Learning / AI.
+        Background:
+        The candidate is transitioning into the field of Data Science / Machine Learning / AI.
 
-                Candidate Resume Summary:
-                {resume}
+        Candidate Resume Summary:
+        {resume}
 
-                Job Information:
-                {job_description}
+        Job Information:
+        {job_description}
 
-                Instructions:
+        Instructions:
 
-                * Emphasize the candidate's machine learning and data science projects as primary evidence of capability.
-                * Highlight the candidate's M.Tech in Data Science & Artificial Intelligence as strong academic preparation.
-                * Mention relevant technical skills such as Python, machine learning libraries, and data analysis tools.
-                * Reframe previous professional experience to highlight transferable skills such as data pipelines, automation, analytical thinking, and problem solving.
-                * Clearly explain the candidate's motivation for transitioning into AI/Data Science.
-                * Align the candidate's skills and projects with the requirements of the job description.
+        * Emphasize the candidate's machine learning and data science projects as primary evidence of capability.
+        * Highlight the candidate's M.Tech in Data Science & Artificial Intelligence as strong academic preparation.
+        * Mention relevant technical skills such as Python, machine learning libraries, and data analysis tools.
+        * Reframe previous professional experience to highlight transferable skills such as data pipelines, automation, analytical thinking, and problem solving.
+        * Clearly explain the candidate's motivation for transitioning into AI/Data Science.
+        * Align the candidate's skills and projects with the requirements of the job description.
 
-                Structure the cover letter as:
+        Structure the cover letter as:
 
-                1. Introduction expressing interest in the role.
-                2. Paragraph highlighting machine learning projects and technical skills.
-                3. Paragraph highlighting M.Tech studies and relevant coursework.
-                4. Paragraph reframing prior work experience to show transferable technical skills.
-                5. Closing paragraph expressing enthusiasm and readiness to contribute.
+        1. Introduction expressing interest in the role.
+        2. Paragraph highlighting machine learning projects and technical skills.
+        3. Paragraph highlighting M.Tech studies and relevant coursework.
+        4. Paragraph reframing prior work experience to show transferable technical skills.
+        5. Closing paragraph expressing enthusiasm and readiness to contribute.
 
-                Rules:
+        Rules:
 
-                * Keep the tone professional and confident.
-                * Do not repeat the resume word-for-word.
-                * Keep the cover letter between 200-300 words.
-                * Avoid generic statements.
-                * Return only the cover letter text.
-
-    """
+        * Keep the tone professional and confident.
+        * Do not repeat the resume word-for-word.
+        * Keep the cover letter between 200-300 words.
+        * Avoid generic statements.
+        * Return only the cover letter text.
+        """
+    )
+    return prompt.format(
+        candidate_name=candidate_name,
+        resume=resume,
+        job_description=job_description
+    )
 
 
 def chat_prompt():

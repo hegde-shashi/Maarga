@@ -9,14 +9,9 @@
 
 ## ✨ Key Features
 
-- **Intelligent Job Scraping**: Automatically fetch and parse job descriptions from various job boards to save time.
-- **Advanced Resume Parsing**: Support for PDF and DOCX formats with high-fidelity text extraction.
-- **AI-Powered Analysis**: Deep comparison between your resume and job requirements using **Google Gemini**.
-- **Interactive AI Chat**: Chat with your resume data and job context to get tailored career advice and interview preparation.
-- **Skill Gap Identification**: Visualise exactly which skills you're missing for a specific role.
-- **Secure Authentication**: Robust JWT-based authentication to keep your personal career data private.
-- **Responsive Dashboard**: A sleek, modern UI built with React that works beautifully across all devices.
-- **Chrome Extension**: A companion browser tool to analyze job descriptions directly from any webpage without leaving the job board.
+- **High-Speed Asynchronous Parsing**: Immediate background parsing for newly saved jobs with high-priority execution for the first link.
+- **Smart Garbage Data Filtering**: Automatically detects and deletes jobs with insufficient data (e.g., login pages or search results) to keep your dashboard clean.
+- **Chrome Extension**: A companion tool with **Live Polling** that updates in real-time as the AI finishes parsing job details.
 
 ## 🛠️ Tech Stack
 
@@ -41,6 +36,7 @@
 - **Manifest Version**: V3
 - **Logic**: Vanilla JavaScript
 - **API Communication**: Cross-origin requests to the Flask backend
+- **Live Updates**: Automatic background polling for real-time parsing status updates
 - **Styling**: Custom CSS with a sleek, consistent UI
 
 ## ⚙️ Installation & Setup

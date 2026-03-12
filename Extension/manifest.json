@@ -1,9 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Maarga",
+  "name": "Maarga_test",
   "version": "2.0",
   "permissions": ["activeTab", "scripting"],
   "host_permissions": ["<all_urls>"],
+  "icons" : {
+    "16": "front.png",
+    "48": "front.png",
+    "128": "front.png"
+  },
 
   "action": {
     "default_popup": "popup.html"

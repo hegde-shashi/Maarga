@@ -169,7 +169,15 @@ export default function Dashboard({ setPage }) {
                             >
                                 <div>
                                     <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{j.company}</div>
-                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{j.job_title} <span className="mobile-hidden">· {j.location}</span></div>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        {j.is_parsed === false ? (
+                                            <span style={{ color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                 AI Processing...
+                                            </span>
+                                        ) : (
+                                            <>{j.job_title} <span className="mobile-hidden">· {j.location}</span></>
+                                        )}
+                                    </div>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <span className={`badge ${PROGRESS_COLORS[j.progress] || 'badge-muted'}`}>{j.progress || 'Applied'}</span>

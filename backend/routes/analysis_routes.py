@@ -15,11 +15,12 @@ analysis_bp = Blueprint("analysis", __name__)
 @jwt_required()
 def analyze_job():
 
-    data = request.get_json()
-
-    user_id = int(get_jwt_identity())
+    data = request.get_json() or {}
+    if not data or "job_id" not in data:
+        return jsonify({"error": "Missing job_id in request"}), 400
 
     job_id = data["job_id"]
+    user_id = int(get_jwt_identity())
 
     try:
         llm = get_llm(data, temperature=0.2)
@@ -32,7 +33,7 @@ def analyze_job():
     ).first()
 
     if not job:
-        return {"error": "Job not found"}, 404
+        return jsonify({"error": "Job not found"}), 404
 
     # Check if analysis exists
     existing = Analysis.query.filter_by(job_id=job_id).first()
@@ -71,8 +72,8 @@ def analyze_job():
             raw_content = " ".join([str(p.get("text", p)) if isinstance(p, dict) else str(p) for p in raw_content])
             
         import re
-        match = re.search(r'\{[\s\S]*\}', str(raw_content))
-        parsed = json.loads(match.group(0)) if match else json.loads(str(raw_content))
+        match = re.search(r"\{.*\}", str(raw_content), re.DOTALL)
+        parsed = json.loads(match.group()) if match else {}
 
         score = parsed.get("score") or parsed.get("match_score") or parsed.get("Match Score") or parsed.get("matchScore") or 0
         matched = parsed.get("matched_skills") or parsed.get("Matched Skills") or parsed.get("matchedSkills") or []

@@ -8,6 +8,10 @@ from backend.ai.llm_client import get_llm, handle_llm_error
 import json
 import re
 from backend.models.analysis_model import Analysis
+import threading
+from flask import current_app
+from backend.services.job_processor import process_job_task
+from backend.utils.utils import clean
 
 
 job_bp = Blueprint('job', __name__)
@@ -16,35 +20,21 @@ job_bp = Blueprint('job', __name__)
 JOB_FIELDS = {
     'job_link', 'job_title', 'job_id', 'company', 'location',
     'experience_required', 'skills_required', 'preferred_skills',
-    'responsibilities', 'education', 'job_type', 'progress'
+    'responsibilities', 'education', 'job_type', 'progress',
+    'is_parsed', 'raw_content'
 }
 
 
 def parse_llm_response(text):
-    """Try to parse JSON from LLM response."""
-    # Ensure we are working with a string
-    if isinstance(text, list):
-        # Join parts if the LLM returned multiple content blocks
-        text = " ".join([str(p.get("text", p)) if isinstance(p, dict) else str(p) for p in text])
-    
+    """Clean and parse JSON from LLM response using regex."""
     if not isinstance(text, str):
         text = str(text)
-
+    
     try:
-        # 1. Try direct JSON parse
-        return json.loads(text.strip())
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        return json.loads(match.group()) if match else {}
     except Exception:
-        try:
-            # 2. Try cleaning markdown markers
-            cleaned = text.replace("```json", "").replace("```", "").strip()
-            return json.loads(cleaned)
-        except Exception:
-            try:
-                # 3. Last resort: regex search for the first { } block
-                match = re.search(r"\{.*\}", text, re.DOTALL)
-                return json.loads(match.group()) if match else {}
-            except Exception:
-                return {}
+        return {}
 
 
 @job_bp.route('/parse_job', methods=['POST'])
@@ -65,8 +55,15 @@ def parse_job():
         chain = job_description_prompt() | llm
         result = chain.invoke({"job_text": clean_html})
         parsed_data = parse_llm_response(result.content)
+        return jsonify({"scrape_success": True, "llm_free": True, "job_data": parsed_data})
     except Exception as e:
-        return jsonify({"scrape_success": False, "message": handle_llm_error(e)})
+        # If LLM fails (traffic/free limit), we still return success but with raw content
+        return jsonify({
+            "scrape_success": True, 
+            "llm_free": False, 
+            "raw_content": clean_html,
+            "message": "AI is busy. Job saved for background processing."
+        })
 
     return jsonify({"scrape_success": True, "job_data": parsed_data})
 
@@ -81,8 +78,14 @@ def parse_jd():
         chain = job_description_prompt() | llm
         result = chain.invoke({"job_text": jd})
         parsed_data = parse_llm_response(result.content)
+        return jsonify({"scrape_success": True, "llm_free": True, "job_data": parsed_data})
     except Exception as e:
-        return jsonify({"scrape_success": False, "message": handle_llm_error(e)})
+        return jsonify({
+            "scrape_success": True, 
+            "llm_free": False, 
+            "raw_content": jd,
+            "message": "AI is busy. Job saved for background processing."
+        })
 
     return jsonify({"scrape_success": True, "job_data": parsed_data})
 
@@ -94,7 +97,18 @@ def save_job():
     data    = request.get_json()
 
     # Only pass fields that exist on the model
+    # Handle mappings for extension/frontend compatibility
+    if 'title' in data and 'job_title' not in data:
+        data['job_title'] = data['title']
+    if 'experience' in data and 'experience_required' not in data:
+        data['experience_required'] = data['experience']
+    # Map job_description alias to raw_content
+    if 'job_description' in data and 'raw_content' not in data:
+        data['raw_content'] = data['job_description']
+        
     job_data = {k: v for k, v in data.items() if k in JOB_FIELDS}
+    if 'raw_content' in job_data and job_data['raw_content']:
+        job_data['raw_content'] = clean(job_data['raw_content'])
 
     # Stringify list fields so they fit in Text columns
     for field in ('skills_required', 'preferred_skills', 'responsibilities', 'education', 'experience_required'):
@@ -102,11 +116,37 @@ def save_job():
             job_data[field] = ", ".join(str(i) for i in job_data[field])
 
     try:
+        # Default is_parsed to True if we already have job_title (immediate success)
+        # Otherwise if job_title is missing, it's definitely pending
+        is_parsed = data.get('is_parsed')
+        if is_parsed is None:
+            is_parsed = True if job_data.get('job_title') else False
+            
         job = Jobs(user_id=user_id, **job_data)
+        job.is_parsed = is_parsed
         db.session.add(job)
         db.session.commit()
-        return jsonify({"message": "Job saved", "job_id": job.id})
+        logging.info(f"Job saved successfully with ID {job.id}")
+
+        # START IMMEDIATE BACKGROUND PARSE if not already parsed
+        if not is_parsed:
+            logging.info(f"Starting background parse for Job {job.id}")
+            # Extract transients (these are NOT in JOB_FIELDS, so not saved to DB)
+            llm_config = {
+                "model": data.get("model") or data.get("selected_model"),
+                "mode": "user" if data.get("api_key") else "default",
+                "api_key": data.get("api_key")
+            }
+            # Pass app instance for context - using threading for a "fire and forget" task
+            thread = threading.Thread(
+                target=process_job_task, 
+                args=(current_app._get_current_object(), job.id, llm_config)
+            )
+            thread.start()
+
+        return jsonify({"message": "Job saved", "job_id": job.id, "is_parsed": job.is_parsed})
     except Exception as e:
+        logging.error(f"Error saving job: {e}")
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
@@ -138,6 +178,7 @@ def get_jobs():
             "education": job.education,
             "job_type": job.job_type,
             "progress": job.progress,
+            "is_parsed": job.is_parsed,
             "matchScore": match_score,
             "created_at": job.created_at.strftime("%d/%m/%Y %H:%M:%S") if job.created_at else "",
         })

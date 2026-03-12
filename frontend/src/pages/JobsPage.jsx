@@ -26,11 +26,27 @@ function AddJobModal({ onClose, onAdded }) {
             const endpoint = tab === 'link' ? '/parse_job' : '/parse_jd_txt'
             const body = tab === 'link' ? { job_link: link, ...llmPayload } : { job_description: jdText, ...llmPayload }
             const { data } = await api.post(endpoint, body)
+
             if (data.scrape_success === false) {
                 toast.error(data.message || 'Scraping failed. Switching to manual paste.');
                 if (tab === 'link') setTab('text');
                 return;
             }
+
+            if (data.llm_free === false) {
+                toast.success('AI is busy. Saving for background processing...');
+                // Auto-save with raw content
+                await save({
+                    is_parsed: false,
+                    job_description: data.raw_content,
+                    job_link: link,
+                    company: link ? new URL(link).hostname.replace('www.', '') : 'Pending...',
+                    model: llmPayload.model,
+                    api_key: llmPayload.api_key
+                });
+                return;
+            }
+
             setParsed(data.job_data)
             setParsedTab(tab)
             toast.success('Job parsed!')
@@ -40,15 +56,19 @@ function AddJobModal({ onClose, onAdded }) {
         } finally { setLoading(false) }
     }
 
-    async function save() {
+    async function save(overrides = null) {
         setSaving(true)
-        const payload = { ...parsed, job_link: link, progress: 'Checking', ...llmPayload }
+        const payload = overrides || { ...parsed, job_link: link, progress: 'Checking', is_parsed: true, ...llmPayload }
         try {
             await api.post('/save_job', payload)
-            toast.success('Job saved!')
+            if (!overrides) toast.success('Job saved!')
             onAdded()
             onClose()
-        } catch { toast.error('Save failed') } finally { setSaving(false) }
+        } catch {
+            toast.error('Save failed')
+        } finally {
+            setSaving(false)
+        }
     }
 
     const field = (label, key) => (
@@ -241,10 +261,18 @@ function JobCard({ job, onDelete, onProgressChange, onAnalyse, onMail, onCoverLe
                         )}
                     </div>
                     <div className="job-card-company" style={{
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%'
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem'
                     }}>
-                        {job.job_title}
-                        <span className="mobile-hidden">{job.job_id ? ` · ${job.job_id}` : ''}</span>
+                        {job.is_parsed === false ? (
+                            <span style={{ color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem' }}>
+                                <RefreshCw size={12} className="spin" /> AI Processing...
+                            </span>
+                        ) : (
+                            <>
+                                {job.job_title}
+                                <span className="mobile-hidden">{job.job_id ? ` · ${job.job_id}` : ''}</span>
+                            </>
+                        )}
                     </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem', flexShrink: 0 }}>
@@ -306,15 +334,15 @@ function JobCard({ job, onDelete, onProgressChange, onAnalyse, onMail, onCoverLe
                     value={job.progress || 'Checking'} onChange={e => updateProgress(e.target.value)} disabled={updating}>
                     {PROGRESS_STAGES.map(s => <option key={s}>{s}</option>)}
                 </select>
-                <button className="btn btn-secondary btn-sm" onClick={() => onAnalyse(job)}>
+                <button className="btn btn-secondary btn-sm" onClick={() => onAnalyse(job)} disabled={job.is_parsed === false} title={job.is_parsed === false ? "AI is processing this job description..." : ""}>
                     <FileText size={14} /> Analyse
                 </button>
                 {job.progress !== 'Checking' && (
                     <>
-                        <button className="btn btn-secondary btn-sm" onClick={() => onMail(job)}>
+                        <button className="btn btn-secondary btn-sm" onClick={() => onMail(job)} disabled={job.is_parsed === false}>
                             <Mail size={14} /> Mail
                         </button>
-                        <button className="btn btn-secondary btn-sm" onClick={() => onCoverLetter(job)}>
+                        <button className="btn btn-secondary btn-sm" onClick={() => onCoverLetter(job)} disabled={job.is_parsed === false}>
                             <FileSignature size={14} /> Cover Letter
                         </button>
                     </>
@@ -351,7 +379,7 @@ export default function JobsPage() {
     const { llmPayload } = useSettings()
 
     const load = () => api.get('/get_jobs').then(r => setJobs(r.data)).finally(() => setLoading(false))
-    useEffect(() => { 
+    useEffect(() => {
         load()
         if (sessionStorage.getItem('openAddJob') === 'true') {
             setShowAdd(true)

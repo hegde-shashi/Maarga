@@ -1,4 +1,4 @@
-const API = "<BACKEND_API_KEY>";
+const API = "<BACKEND_URL>";
 const MODEL_STORAGE_KEY = "selectedModel";
 const DEFAULT_API_MODE = "default";
 const USER_API_MODE = "user";
@@ -14,6 +14,7 @@ let activeCustomApiKey = "";
 let customValidationPending = false;
 let isCurrentPageBlocked = false;
 let isCurrentTabSupported = false;
+let statusPollingTimeout = null;
 
 window.onload = () => {
     const token = getStoredToken();
@@ -193,7 +194,8 @@ function normalizeJobPayload(payload) {
         location: source.location ?? null,
         experience: source.experience ?? source.experience_required ?? null,
         job_link: source.job_link ?? source.url ?? source.link ?? null,
-        progress: source.progress ?? null
+        progress: source.progress ?? null,
+        is_parsed: source.is_parsed ?? payload.is_parsed ?? false
     };
 }
 
@@ -492,6 +494,7 @@ function renderAnalysisResult(result) {
     analysisReady = true;
     setVisible("analysis", true);
     setVisible("jobDetails", false);
+    clearStatus();
     updateActionButtons();
 }
 
@@ -502,17 +505,13 @@ function updateActionButtons() {
 
     if (analysisReady || shouldHideControls) {
         setModelVisibility(false);
-    } else {
-        setModelVisibility(true);
-    }
-
-    if (shouldHideControls) {
         setApiModeControlVisibility(false);
         sendButton.style.display = "none";
         analyseButton.style.display = "none";
         return;
     }
 
+    setModelVisibility(true);
     setApiModeControlVisibility(true);
     sendButton.style.display = "block";
 
@@ -531,7 +530,7 @@ function updateActionButtons() {
         sendButton.disabled = true;
         sendButton.classList.add("disabled");
         sendButton.textContent = "Page Already Saved";
-        analyseButton.style.display = currentJobId ? "block" : "none";
+        analyseButton.style.display = (currentJobId && currentJob?.is_parsed) ? "block" : "none";
     } else {
         sendButton.disabled = false;
         sendButton.classList.remove("disabled");
@@ -763,6 +762,9 @@ async function fetchExistingJobForCurrentUrl() {
         const existingJob = findJobByLink(jobs, activeJobLink);
 
         if (!existingJob) {
+            jobExistsInDatabase = false;
+            currentJobId = null;
+            clearTimeout(statusPollingTimeout);
             setStatus("No saved job found for this page.", "info");
             updateActionButtons();
             return;
@@ -773,7 +775,16 @@ async function fetchExistingJobForCurrentUrl() {
         normalizedJob.job_link = activeJobLink;
         currentJobId = existingJob.id || normalizedJob.id || null;
         displayJob(normalizedJob);
-        setStatus("Job already saved for this URL.", "success");
+        setStatus(normalizedJob.is_parsed ? "Job details loaded." : "Job already saved. AI is parsing...", "success");
+
+        // START POLLING if not parsed yet
+        if (!normalizedJob.is_parsed) {
+            console.log("Job not parsed yet, polling in 3s...");
+            clearTimeout(statusPollingTimeout);
+            statusPollingTimeout = setTimeout(fetchExistingJobForCurrentUrl, 3000);
+        } else {
+            clearTimeout(statusPollingTimeout);
+        }
 
         const savedAnalysis = extractSavedAnalysis(existingJob);
         if (savedAnalysis) {
@@ -855,11 +866,11 @@ async function runAnalysis({ silent = false } = {}) {
     }
 }
 
-async function saveCurrentJob({ silent = false } = {}) {
+async function saveCurrentJob({ silent = false, overrides = null } = {}) {
     const token = getStoredToken();
     const model = getSelectedModel();
 
-    if (!currentJob) {
+    if (!currentJob && !overrides) {
         throw new Error("No job details to save");
     }
 
@@ -867,7 +878,7 @@ async function saveCurrentJob({ silent = false } = {}) {
         throw new Error("Session expired. Please login again.");
     }
 
-    const payload = {
+    const payload = overrides || {
         ...currentJob,
         job_link: activeJobLink || currentJob.job_link || "",
         model,
@@ -994,93 +1005,73 @@ document.getElementById("loginBtn").onclick = async () => {
 };
 
 document.getElementById("send").onclick = async () => {
-    if (isBusy) {
-        return;
-    }
+    if (isBusy) return;
 
     const loading = document.getElementById("loading");
-    loading.innerText = "Parsing job description...";
+    loading.innerText = "Extracting page data...";
     loading.style.display = "block";
     clearStatus();
-    setBusyState(true, "Parsing job description...");
+    setBusyState(true, "Sending data to backend...");
 
     try {
-        if (!isLlmReady()) {
-            throw new Error("Validate custom API key before sending the page.");
-        }
-
         const tab = await getActiveTab();
         const data = await getPageData(tab);
-        const model = getSelectedModel();
 
         activeJobLink = normalizeJobLink(data.url || tab.url || "");
-        isCurrentTabSupported = Boolean(
-            activeJobLink && (activeJobLink.startsWith("http://") || activeJobLink.startsWith("https://"))
-        );
-        isCurrentPageBlocked = isBlockedPageUrl(activeJobLink);
-        if (isCurrentPageBlocked) {
-            throw new Error("This page is excluded from analysis. Open a supported job page.");
-        }
 
-        const parsePayload = {
+        setStatus("Data sent to backend. AI is working on this...", "success");
+        loading.innerText = "LLM is processing this in background...";
+
+        const model = getSelectedModel();
+        const llmConfig = getLlmRequestConfig();
+
+        // Immediate Save as unparsed - this is the "non-blocking" part
+        // We don't wait for a 20-second LLM parse anymore here
+        const payload = {
+            is_parsed: false,
             job_description: data.text || "",
             job_link: activeJobLink,
-            model,
-            ...getLlmRequestConfig(),
-            progress: "Checking"
+            // Temporary company name from URL
+            company: activeJobLink ? new URL(activeJobLink).hostname.replace('www.', '') : 'Processing...',
+            job_title: 'AI is parsing details...',
+            progress: "Checking",
+            model: model,
+            api_key: llmConfig.api_key || null
         };
 
-        console.log("Sending payload to parse_jd_txt:", parsePayload);
+        console.log("Sending immediate save payload:", payload);
 
-        const res = await fetch(`${API}/parse_jd_txt`, {
+        const token = getStoredToken();
+        const res = await fetch(`${API}/save_job`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
             },
-            body: JSON.stringify(parsePayload)
+            body: JSON.stringify(payload)
         });
 
-        const { data: jobPayload } = await parseApiResponse(res);
-        console.log("API response for job details:", jobPayload);
-
+        const { data: resData } = await parseApiResponse(res);
         if (!res.ok) {
-            throw new Error(getApiError(res, jobPayload, "Failed to parse job details"));
+            throw new Error(getApiError(res, resData, "Failed to send data"));
         }
 
-        if (!jobPayload || typeof jobPayload !== "object") {
-            throw new Error("Invalid response from parse_jd_txt");
-        }
+        // Final feedback
+        currentJobId = resData.job_id || null;
+        jobExistsInDatabase = true;
+        
+        // Show the job box immediately with the temporary data we just sent
+        displayJob(normalizeJobPayload(payload));
+        
+        setStatus("Job saved to queue! Parsing in background.", "success");
 
-        const job = normalizeJobPayload(jobPayload);
-        job.job_link = activeJobLink;
-        job.progress = "Checking";
+        // We can still call this to sync state, but the UI is already updated
+        fetchExistingJobForCurrentUrl();
 
-        const filledCount = countFilledCoreFields(job);
-        if (filledCount > 3) {
-            analysisReady = false;
-            currentJob = job;
-            displayJob(job);
-            await saveCurrentJob({ silent: true });
-            await fetchExistingJobForCurrentUrl();
-            setStatus("Page parsed and auto-saved.", "success");
-        } else {
-            currentJob = null;
-            currentJobId = null;
-            jobExistsInDatabase = false;
-            analysisReady = false;
-            clearJobAndAnalysisViews();
-            setStatus("Page was not saved because parsed data was incomplete.", "warn");
-            updateActionButtons();
-        }
     } catch (error) {
-        currentJob = null;
-        currentJobId = null;
-        jobExistsInDatabase = false;
-        analysisReady = false;
-        clearJobAndAnalysisViews();
-        loading.innerText = error.message;
-        console.error("Send flow failed:", error);
-        setStatus(error.message || "Failed to send page data.", "warn");
+        console.error("Non-blocking send failed:", error);
+        setStatus(error.message || "Failed to send data.", "warn");
+        loading.innerText = "Error occurred.";
     } finally {
         setBusyState(false);
     }
