@@ -170,10 +170,11 @@ def process_pending_jobs(app):
                             else:
                                 logging.warning(f"Failed to parse LLM response as JSON for pending job {job.id}")
                                 
-                                # 1-minute gap ONLY if there are more jobs to process in this batch
+                                # Short gap if there are more jobs (don't overwhelm the API, but don't wait 1min either)
                                 if i < len(pending_jobs) - 1:
-                                    logging.info("Waiting 1 minute before next job...")
-                                    time.sleep(60)
+                                    logging.info("Waiting 5 seconds before next job...")
+                                    time.sleep(5)
+
                             
                         except Exception as e:
                             error_text = handle_llm_error(e)

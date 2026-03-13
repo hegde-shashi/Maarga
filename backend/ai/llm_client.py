@@ -39,10 +39,13 @@ def get_llm(data, streaming=False, temperature=0, enable_tools=False):
             "model": model,
             "google_api_key": api_key,
             "streaming": streaming,
-            "temperature": temperature
+            "temperature": temperature,
+            "max_retries": 1,        # Don't wait 60s for retries if quota is hit
+            "request_timeout": 20    # Fail fast on network issues
         }
 
         return ChatGoogleGenerativeAI(**llm_params)
+
     except Exception as e:
         raise RuntimeError(handle_llm_error(e))
 
