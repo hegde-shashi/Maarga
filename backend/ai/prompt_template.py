@@ -53,8 +53,10 @@ def compare_prompt(resume, job_description):
 
             1. Experience Match — 30%
 
-            * Compare the years of experience required in the job description with the candidate's experience.
-            * If the difference between required and actual experience is greater than 3 years, treat this as a senior role mismatch and give a very low experience score (0–5).
+            * Compare the total years of experience required by the job with the candidate's total experience.
+            * MANDATORY RULE: If the candidate has 3 or more years LESS experience than required (e.g., they have 3 years but the job requires 6+), this is a "Seniority Mismatch".
+            * In case of a Seniority Mismatch, the Experience Match score MUST be between 0 and 5 out of 30. No exceptions for talent or skills.
+
 
             2. Skills Match — 40%
 
