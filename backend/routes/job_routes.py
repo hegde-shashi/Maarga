@@ -124,27 +124,31 @@ def save_job():
         if is_parsed is None:
             is_parsed = True if job_data.get('job_title') else False
             
+        llm_config = {
+            "model": data.get("model") or data.get("selected_model") or "gemini-2.5-flash-lite",
+            "mode": "user" if data.get("api_key") else "default",
+            "api_key": data.get("api_key")
+        }
+
+        # Save ONLY the model for background retries (security: no API keys in DB)
+        db_llm_config = {"model": llm_config["model"]}
+
         job = Jobs(user_id=user_id, **job_data)
         job.is_parsed = is_parsed
+        job.llm_params = db_llm_config
         db.session.add(job)
         db.session.commit()
-        logging.info(f"Job saved successfully with ID {job.id}")
 
         # START IMMEDIATE BACKGROUND PARSE if not already parsed
         if not is_parsed:
             logging.info(f"Starting background parse for Job {job.id}")
-            # Extract transients (these are NOT in JOB_FIELDS, so not saved to DB)
-            llm_config = {
-                "model": data.get("model") or data.get("selected_model"),
-                "mode": "user" if data.get("api_key") else "default",
-                "api_key": data.get("api_key")
-            }
-            # Pass app instance for context - using threading for a "fire and forget" task
+            # Use the transient llm_config (with key) for the immediate task only
             thread = threading.Thread(
                 target=process_job_task, 
                 args=(current_app._get_current_object(), job.id, llm_config)
             )
             thread.start()
+
 
         return jsonify({"message": "Job saved", "job_id": job.id, "is_parsed": job.is_parsed, "error": job.error_message})
 
