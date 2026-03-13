@@ -130,24 +130,22 @@ def save_job():
             "api_key": data.get("api_key")
         }
 
-        # Save ONLY the model for background retries (security: no API keys in DB)
-        db_llm_config = {"model": llm_config["model"]}
 
         job = Jobs(user_id=user_id, **job_data)
         job.is_parsed = is_parsed
-        job.llm_params = db_llm_config
         db.session.add(job)
         db.session.commit()
+
 
         # START IMMEDIATE BACKGROUND PARSE if not already parsed
         if not is_parsed:
             logging.info(f"Starting background parse for Job {job.id}")
-            # Use the transient llm_config (with key) for the immediate task only
             thread = threading.Thread(
                 target=process_job_task, 
                 args=(current_app._get_current_object(), job.id, llm_config)
             )
             thread.start()
+
 
 
         return jsonify({"message": "Job saved", "job_id": job.id, "is_parsed": job.is_parsed, "error": job.error_message})

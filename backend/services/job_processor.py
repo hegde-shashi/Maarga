@@ -126,21 +126,14 @@ def process_pending_jobs(app):
                             continue
                             
                         try:
-                            # Use the model chosen by the user, but fallback to default if not found
+                            # Use system default for background retries (security: no user params stored)
                             target_model = "gemini-2.5-flash-lite"
-                            if job.llm_params and isinstance(job.llm_params, dict):
-                                target_model = job.llm_params.get('model', target_model)
-                            elif job.llm_params and isinstance(job.llm_params, str):
-                                try:
-                                    import json
-                                    params = json.loads(job.llm_params)
-                                    target_model = params.get('model', target_model)
-                                except: pass
                             
                             # ALWAYS use 'default' mode (system API key) for background retries
                             llm = get_llm({"model": target_model, "mode": "default"})
                             chain = job_description_prompt() | llm
                             result = chain.invoke({"job_text": job.raw_content})
+
 
                             parsed = parse_llm_response(result.content)
                             
