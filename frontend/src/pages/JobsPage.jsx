@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+
 import api from '../api'
 import toast from 'react-hot-toast'
 import { Plus, Trash2, FileText, MapPin, Briefcase, ChevronDown, ChevronUp, RefreshCw, Mail, FileSignature } from 'lucide-react'
@@ -220,12 +221,21 @@ function JobCard({ job, onDelete, onProgressChange, onAnalyse, onMail, onCoverLe
     const [updating, setUpdating] = useState(false)
     const [deleteModalOpen, setDeleteModalOpen] = useState(false)
     const [deleting, setDeleting] = useState(false)
-    const [initialSettings] = useState(job.error_message ? { ...llmPayload } : null)
+    const errorRef = useRef(null)
+    if (job.error_message && !errorRef.current) {
+        errorRef.current = { ...llmPayload }
+    } else if (!job.error_message) {
+        errorRef.current = null
+    }
 
+    const initialSettings = errorRef.current
     const settingsChanged = initialSettings && (
         initialSettings.model !== llmPayload.model || 
-        initialSettings.api_key !== llmPayload.api_key
+        initialSettings.mode !== llmPayload.mode ||
+        (initialSettings.api_key || '') !== (llmPayload.api_key || '')
     )
+
+
 
     async function updateProgress(progress) {
 

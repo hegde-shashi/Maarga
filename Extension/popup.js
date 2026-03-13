@@ -562,13 +562,18 @@ function updateActionButtons() {
         
         // Disable by default, enable only if user changed anything
         const currentModel = getSelectedModel();
+        const currentMode = llmMode;
         const currentKey = getLlmRequestConfig().api_key || null;
         
         if (!lastErrorConfig) {
-            lastErrorConfig = { model: currentModel, api_key: currentKey };
+            lastErrorConfig = { model: currentModel, mode: currentMode, api_key: currentKey };
             retryBtn.disabled = true;
             retryBtn.style.opacity = "0.6";
-        } else if (lastErrorConfig.model === currentModel && lastErrorConfig.api_key === currentKey) {
+        } else if (
+            lastErrorConfig.model === currentModel && 
+            lastErrorConfig.mode === currentMode &&
+            (lastErrorConfig.api_key || '') === (currentKey || '')
+        ) {
             retryBtn.disabled = true;
             retryBtn.style.opacity = "0.6";
         } else {
@@ -579,6 +584,7 @@ function updateActionButtons() {
         retryBtn.style.display = "none";
         lastErrorConfig = null; // Clear if error is gone
     }
+
 
     if (isBusy) {
         sendButton.disabled = true;
