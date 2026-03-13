@@ -186,6 +186,8 @@ def get_jobs():
             "is_parsed": job.is_parsed,
             "error_message": job.error_message,
             "matchScore": match_score,
+            "raw_content": job.raw_content,
+
             "created_at": job.created_at.strftime("%d/%m/%Y %H:%M:%S") if job.created_at else "",
 
         })

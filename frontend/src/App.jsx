@@ -7,6 +7,7 @@ import { SettingsProvider } from './context/SettingsContext'
 import AuthPage from './pages/AuthPage'
 import Dashboard from './pages/Dashboard'
 import ResumePage from './pages/ResumePage'
+import GeneratorPage from './pages/GeneratorPage'
 import JobsPage from './pages/JobsPage'
 import ChatPage from './pages/ChatPage'
 import Sidebar from './components/Sidebar'
@@ -16,8 +17,10 @@ const PAGE_TITLES = {
   dashboard: 'Dashboard',
   resume: 'My Resume',
   jobs: 'Job Tracker',
+  generator: 'Resume Generator',
   chat: 'AI Chat Assistant',
 }
+
 
 function AppShell() {
   const { isAuth } = useAuth()
@@ -37,8 +40,10 @@ function AppShell() {
     dashboard: Dashboard,
     resume: ResumePage,
     jobs: JobsPage,
+    generator: GeneratorPage,
     chat: ChatPage,
   }[page] || Dashboard
+
 
   return (
     <div className={`app-shell page-${page} ${sidebarHidden ? 'sidebar-hidden' : ''}`}>

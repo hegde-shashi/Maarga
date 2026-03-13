@@ -89,8 +89,8 @@ def process_job_task(app, job_id, llm_config=None):
                 
                 job.is_parsed = True
                 job.error_message = None # Clear any previous error
-                job.raw_content = None # Cleanup
                 db.session.commit()
+
 
                 logging.info(f"Successfully parsed job {job_id} in background task.")
             else:

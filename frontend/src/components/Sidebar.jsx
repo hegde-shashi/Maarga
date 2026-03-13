@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, FileText, Briefcase, MessageSquare, LogOut, Settings, User, Key, UserX, ChevronRight, ChevronDown } from 'lucide-react'
+import { LayoutDashboard, FileText, Briefcase, MessageSquare, LogOut, Settings, User, Key, UserX, ChevronRight, ChevronDown, FileSignature } from 'lucide-react'
+
 import { ModelSelector, ApiModeToggle } from './AIOptions'
 import Logo from './Logo'
 import ConfirmModal from './ConfirmModal'
@@ -12,8 +13,10 @@ const NAV = [
     { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
     { key: 'resume', label: 'Resume', icon: <FileText size={16} /> },
     { key: 'jobs', label: 'Jobs', icon: <Briefcase size={16} /> },
+    { key: 'generator', label: 'Generator', icon: <FileSignature size={16} /> },
     { key: 'chat', label: 'AI Chat', icon: <MessageSquare size={16} /> },
 ]
+
 
 export default function Sidebar({ page, setPage, isOpen, setIsOpen, hidden, setHidden }) {
     const { logout, username } = useAuth()

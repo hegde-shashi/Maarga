@@ -2,8 +2,27 @@ import base64
 import io
 import os
 
+def get_full_text(file_b64: str, filename: str = "resume.pdf"):
+
+    """Extract full string text from base64 file."""
+    file_bytes = base64.b64decode(file_b64)
+    ext = os.path.splitext(filename)[-1].lower()
+
+    if ext == ".pdf":
+        import pypdf
+        reader = pypdf.PdfReader(io.BytesIO(file_bytes))
+        text = "\n".join(page.extract_text() or "" for page in reader.pages)
+    elif ext == ".docx":
+        import docx
+        doc = docx.Document(io.BytesIO(file_bytes))
+        text = "\n".join(para.text for para in doc.paragraphs)
+    else:
+        text = file_bytes.decode("utf-8", errors="ignore")
+    
+    return text.strip()
 
 def get_resume_text(file_b64: str, filename: str = "resume.pdf"):
+
     """
     Decode base64 file and extract text.
     Supports: pdf, txt, docx, doc

@@ -9,6 +9,8 @@
 
 ## ✨ Key Features
 
+- **Professional Resume Generator**: Build high-impact, ATS-friendly resumes from scratch or refine existing ones using AI-driven optimization.
+- **Dynamic DOCX Export**: Export your resume as a professional Microsoft Word document featuring live, clickable hyperlinks for your portfolio and projects.
 - **Intelligent Job Scraping**: Automatically fetch and parse job descriptions from various job boards to save time.
 - **Advanced Resume Parsing**: Support for PDF and DOCX formats with high-fidelity text extraction.
 - **AI-Powered Analysis**: Deep comparison between your resume and job requirements using **Google Gemini**.
@@ -16,6 +18,7 @@
 - **Skill Gap Identification**: Visualise exactly which skills you're missing for a specific role.
 - **Secure Authentication**: Robust JWT-based authentication to keep your personal career data private.
 - **Responsive Dashboard**: A sleek, modern UI built with React that works beautifully across all devices.
+- **Context-Aware Theming**: A fully responsive dashboard where every component, including native date pickers and custom dropdowns, synchronizes perfectly with your preferred theme.
 - **High-Speed Asynchronous Parsing**: Immediate background parsing for newly saved jobs with high-priority execution for the first link.
 - **Smart Garbage Data Filtering**: Automatically detects and deletes jobs with insufficient data (e.g., login pages or search results) to keep your dashboard clean.
 - **Chrome Extension**: A companion tool with **Live Polling** that updates in real-time as the AI finishes parsing job details.

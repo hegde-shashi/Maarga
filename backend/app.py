@@ -23,8 +23,10 @@ from backend.routes.analysis_routes import analysis_bp
 from backend.routes.settings_routes import settings_bp
 from backend.routes.chat_routes import chat_bp
 from backend.routes.mail_routes import mail_bp
+from backend.routes.resume_generate_route import resume_gen_bp
 
 app = Flask(__name__)
+
 
 # Very important: Enable CORS so frontend domain can talk to backend domain!
 CORS(app)
@@ -119,6 +121,8 @@ app.register_blueprint(analysis_bp)
 app.register_blueprint(settings_bp)
 app.register_blueprint(chat_bp)
 app.register_blueprint(mail_bp)
+app.register_blueprint(resume_gen_bp)
+
 
 if __name__ == "__main__":
     import os

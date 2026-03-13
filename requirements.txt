@@ -4,6 +4,7 @@ Flask-SQLAlchemy==3.1.1
 Flask-JWT-Extended==4.7.1
 Flask-Bcrypt==1.0.1
 flask-cors==5.0.1
+docxtpl==0.16.10
 
 # ── Production WSGI server ─────────────────────────────────────────
 gunicorn==23.0.0

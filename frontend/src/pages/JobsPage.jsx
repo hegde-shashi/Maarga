@@ -230,7 +230,7 @@ function JobCard({ job, onDelete, onProgressChange, onAnalyse, onMail, onCoverLe
 
     const initialSettings = errorRef.current
     const settingsChanged = initialSettings && (
-        initialSettings.model !== llmPayload.model || 
+        initialSettings.model !== llmPayload.model ||
         initialSettings.mode !== llmPayload.mode ||
         (initialSettings.api_key || '') !== (llmPayload.api_key || '')
     )
@@ -283,7 +283,7 @@ function JobCard({ job, onDelete, onProgressChange, onAnalyse, onMail, onCoverLe
                     }}>
                         {job.error_message ? (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', maxWidth: '100%', flexWrap: 'wrap' }}>
-                                <span 
+                                <span
                                     style={{ color: 'var(--danger)', fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
                                     title={job.error_message}
                                 >
@@ -292,15 +292,15 @@ function JobCard({ job, onDelete, onProgressChange, onAnalyse, onMail, onCoverLe
                                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                                     (Try a different API or model and...)
                                 </span>
-                                <button 
-                                    className="btn btn-ghost btn-xs" 
-                                    style={{ 
-                                        padding: '2px 6px', 
-                                        fontSize: '0.7rem', 
-                                        height: 'auto', 
-                                        minHeight: 0, 
-                                        color: settingsChanged ? 'var(--accent)' : 'var(--text-muted)', 
-                                        cursor: settingsChanged ? 'pointer' : 'not-allowed', 
+                                <button
+                                    className="btn btn-ghost btn-xs"
+                                    style={{
+                                        padding: '2px 6px',
+                                        fontSize: '0.7rem',
+                                        height: 'auto',
+                                        minHeight: 0,
+                                        color: settingsChanged ? 'var(--accent)' : 'var(--text-muted)',
+                                        cursor: settingsChanged ? 'pointer' : 'not-allowed',
                                         border: `1px solid ${settingsChanged ? 'var(--accent)' : 'var(--border-light)'}`,
                                         opacity: settingsChanged ? 1 : 0.6
                                     }}
