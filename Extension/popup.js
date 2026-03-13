@@ -551,6 +551,8 @@ function updateActionButtons() {
     analyseButton.textContent = "Analyse Resume Match";
 
     const retryBtn = document.getElementById("retryBtn");
+    retryBtn.textContent = "Try Different Settings & Retry";
+
     const hasError = currentJob && currentJob.error_message && !currentJob.is_parsed;
     
     if (hasError && !shouldHideControls && !analysisReady) {
@@ -801,7 +803,8 @@ async function fetchExistingJobForCurrentUrl() {
             const shortError = String(normalizedJob.error_message)
                 .split(/\n|\\n/)[0]
                 .trim();
-            setStatus(`Error: ${shortError}`, "warn", normalizedJob.error_message);
+            setStatus(`Error: ${shortError}. Try a different API/Model and retry.`, "warn", normalizedJob.error_message);
+
         } else {
 
 

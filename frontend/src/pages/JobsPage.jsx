@@ -265,22 +265,26 @@ function JobCard({ job, onDelete, onProgressChange, onAnalyse, onMail, onCoverLe
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem'
                     }}>
                         {job.error_message ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', maxWidth: '100%' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', maxWidth: '100%', flexWrap: 'wrap' }}>
                                 <span 
-                                    style={{ color: 'var(--danger)', fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                                    style={{ color: 'var(--danger)', fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}
                                     title={job.error_message}
                                 >
                                     ⚠️ Error: {String(job.error_message).split(/\n|\\n/)[0].trim()}
                                 </span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                                    (Try a different API or model and...)
+                                </span>
                                 <button 
                                     className="btn btn-ghost btn-xs" 
-                                    style={{ padding: '2px 6px', fontSize: '0.7rem', height: 'auto', minHeight: 0, color: 'var(--accent)', cursor: 'pointer' }}
+                                    style={{ padding: '2px 6px', fontSize: '0.7rem', height: 'auto', minHeight: 0, color: 'var(--accent)', cursor: 'pointer', border: '1px solid var(--accent)' }}
                                     onClick={(e) => { e.stopPropagation(); onReprocess(job.id); }}
                                 >
                                     <RefreshCw size={10} /> Retry
                                 </button>
                             </div>
                         ) : job.is_parsed === false ? (
+
 
 
 
