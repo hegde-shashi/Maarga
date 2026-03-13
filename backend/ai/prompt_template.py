@@ -21,26 +21,27 @@ def resume_check(text):
 def job_description_prompt():
     return ChatPromptTemplate.from_template(
         """
-        Extract structured job information.
+        Extract structured job information from the provided text. Think like a recruiter: prioritize what is most important for the role.
 
-        Return ONLY JSON, No any preamble.
+        Return ONLY valid JSON. No preamble.
 
-        Fields:
-        job_title
-        job_id
-        company
-        location
-        experience_required
-        skills_required
-        preferred_skills
-        responsibilities
-        education
-        job_type
+        Fields and Extraction Rules:
+        - job_title: The official title of the role.
+        - job_id: Any unique reference code if mentioned.
+        - company: Name of the hiring organization.
+        - location: Work location.
+        - experience_required: Capture the specific number of years. If the text mentions that "experience is not a bar" or is flexible for exceptional talent, explicitly include that phrase in this field (e.g., "5+ years, but flexible for exceptional talent").
+        - skills_required: List only the **Core/Primary Skills**. These are skills mentioned as "Must have", "Required", or mentioned repeatedly as fundamental to the role.
+        - preferred_skills: List **Secondary/Nice-to-have Skills**. These are skills mentioned as "Preferred", "Plus", "Desired", or "Bonus".
+        - responsibilities: Summary of key tasks.
+        - education: Degrees or certifications required.
+        - job_type: e.g., Full-time, Internship, Contract.
 
-        Job Description:
+        Job Description Text:
         {job_text}
         """
     )
+
 
 
 def compare_prompt(resume, job_description):
