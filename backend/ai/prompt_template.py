@@ -54,10 +54,13 @@ def compare_prompt(resume, job_description):
             1. Experience Match — 30%
 
             * Compare the total years of experience required by the job with the candidate's total experience.
-            * CRITICAL RULE: If the candidate has 2 or more years LESS experience than required (e.g., they have 3 years but the job requires 5+), this is a "Seniority Mismatch".
-            * In case of a Seniority Mismatch:
-                a) The Experience Match score MUST be between 0 and 5 out of 30.
-                b) The TOTAL overall score (out of 100) MUST NOT exceed 40. This is a hard cap. The candidate is not senior enough for the role regardless of skills.
+            * CRITICAL RULE: If the candidate has 2 or more years LESS experience than required (e.g., 3 years exp for a 5+ year role), this is a "Seniority Mismatch".
+            * Handling Seniority Mismatch:
+                a) The Experience Match score MUST be low (0 to 5 out of 30) because the tenure requirement is not met.
+                b) SCORE CAP & FLEXIBILITY:
+                   - If the Job Description explicitly states that "experience is not a bar for exceptional candidates" or similar flexible language: Do NOT apply a hard cap on the total score. Evaluate the candidate's Skills and Projects fairly; if they are truly exceptional, the total score can be high despite the low experience score.
+                   - If NO such flexible language exists: The TOTAL overall score (out of 100) MUST NOT exceed 30. This is a hard cap.
+
 
 
 
