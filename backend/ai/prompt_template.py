@@ -68,9 +68,16 @@ def compare_prompt(resume, job_description):
 
             2. Skills Match — 40%
 
-            * Compare technical skills mentioned in the job description with those in the resume.
+            * DO NOT perform 1:1 keyword matching. Instead, identify the **Core vs. Secondary Skills** in the Job Description based on emphasis and frequency of mention.
+            * Prioritize weightage based on JD emphasis. For example, if SQL is mentioned as the "primary requirement" or appears three times, it is worth more than a skill mentioned once in a "nice to have" list.
+            * Missing a core/heavily-emphasized skill should result in a much larger score deduction than missing a secondary skill.
+            * Evaluate the *context* of skills: A skill listed in a "Skills" section is worth less than a skill proven through years of application in the "Experience" section.
 
             3. Work / Project Relevance — 20%
+
+            * Look for specific evidence where the candidate applied the JD's most important skills in high-impact projects or previous roles.
+            * If the JD is for a Data Scientist role but the projects are purely Web Development, the score should be low even if the tech stack (e.g., Python) overlaps. Relevance of *domain* and *responsibility* is key.
+
 
             4. Resume Quality — 10%
 
