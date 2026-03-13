@@ -67,10 +67,12 @@ def process_job_task(app, job_id, llm_config=None):
             parsed = parse_llm_response(result.content)
             
             if parsed:
-                # VALIDATION CHECK: If garbage content (too many empty fields), delete the job
+                # VALIDATION CHECK: If garbage content (too many empty fields), stop retries but don't delete
                 if not is_job_valid(parsed):
-                    logging.info(f"Job {job_id} found to be garbage content after parsing. Deleting.")
-                    db.session.delete(job)
+                    logging.info(f"Job {job_id} found to be garbage content after parsing. Stopping retries.")
+                    job.is_parsed = False
+                    job.retry_count = 5 # Prevent auto-retries, let user restart
+                    job.error_message = "Low quality content: AI could not extract enough job details from this link. Try pasting the JD manually."
                     db.session.commit()
                     return
 
@@ -89,24 +91,21 @@ def process_job_task(app, job_id, llm_config=None):
                 
                 job.is_parsed = True
                 job.error_message = None # Clear any previous error
+                job.retry_count = 0
                 db.session.commit()
-
 
                 logging.info(f"Successfully parsed job {job_id} in background task.")
             else:
                 logging.warning(f"Failed to parse LLM response as JSON for job {job_id}")
+                job.retry_count = (job.retry_count or 0) + 1
+                job.error_message = "AI response was not in expected format."
+                db.session.commit()
         except Exception as e:
             error_text = handle_llm_error(e)
             logging.error(f"Immediate parse failed for job {job_id}: {error_text}")
             job.error_message = error_text
             job.retry_count = (job.retry_count or 0) + 1
-            
-            if job.retry_count >= 5:
-                logging.info(f"Job {job_id} reached 5 retries. Deleting.")
-                db.session.delete(job)
-            
             db.session.commit()
-
 
 
 def process_pending_jobs(app):
@@ -115,7 +114,8 @@ def process_pending_jobs(app):
     while True:
         try:
             with app.app_context():
-                pending_jobs = Jobs.query.filter_by(is_parsed=False).all()
+                # Only try to parse jobs that are not parsed and have tried less than 5 times
+                pending_jobs = Jobs.query.filter(Jobs.is_parsed == False, Jobs.retry_count < 5).all()
                 if pending_jobs:
                     logging.info(f"Found {len(pending_jobs)} pending jobs to process.")
                     
@@ -126,7 +126,7 @@ def process_pending_jobs(app):
                             continue
                             
                         try:
-                            # Use system default for background retries (security: no user params stored)
+                            # Use system default for background retries
                             target_model = "gemini-2.5-flash-lite"
                             
                             # ALWAYS use 'default' mode (system API key) for background retries
@@ -134,14 +134,15 @@ def process_pending_jobs(app):
                             chain = job_description_prompt() | llm
                             result = chain.invoke({"job_text": job.raw_content})
 
-
                             parsed = parse_llm_response(result.content)
                             
                             if parsed:
-                                # VALIDATION CHECK: If garbage content (too many empty fields), delete the job
+                                # VALIDATION CHECK: If garbage content (too many empty fields), stop retries but don't delete
                                 if not is_job_valid(parsed):
-                                    logging.info(f"Pending Job {job.id} found to be garbage. Deleting.")
-                                    db.session.delete(job)
+                                    logging.info(f"Pending Job {job.id} found to be garbage. Stopping retries.")
+                                    job.is_parsed = False
+                                    job.retry_count = 5
+                                    job.error_message = "Low quality content: AI could not extract enough job details from this link. Try pasting the JD manually."
                                     db.session.commit()
                                     continue
 
@@ -169,10 +170,12 @@ def process_pending_jobs(app):
 
                             else:
                                 logging.warning(f"Failed to parse LLM response as JSON for pending job {job.id}")
+                                job.retry_count = (job.retry_count or 0) + 1
+                                job.error_message = "AI response format error."
+                                db.session.commit()
                                 
-                                # Short gap if there are more jobs (don't overwhelm the API, but don't wait 1min either)
+                                # Short gap if there are more jobs
                                 if i < len(pending_jobs) - 1:
-                                    logging.info("Waiting 5 seconds before next job...")
                                     time.sleep(5)
 
                             
@@ -181,19 +184,13 @@ def process_pending_jobs(app):
                             logging.error(f"Error processing pending job {job.id}: {error_text}")
                             job.error_message = error_text
                             job.retry_count = (job.retry_count or 0) + 1
-
-                            if job.retry_count >= 5:
-                                logging.info(f"Pending Job {job.id} reached 5 retries. Deleting.")
-                                db.session.delete(job)
-                            
                             db.session.commit()
-                            # On ANY error, we pause for 30s to be safe
+                            # On ANY error, we pause for a bit
                             break
-
 
                 
         except Exception as e:
             logging.error(f"Background worker error: {e}")
             
-        # Wait for 30 seconds before checking again
-        time.sleep(30)
+        # Wait for 1 minute before checking again (as requested)
+        time.sleep(60)
