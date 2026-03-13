@@ -27,7 +27,8 @@ def analyze_job():
     try:
         llm = get_llm(data, temperature=0.2)
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": handle_llm_error(e)}), 400
+
 
     job = Jobs.query.filter_by(
         id=job_id,

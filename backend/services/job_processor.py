@@ -2,7 +2,8 @@ import time
 import logging
 from backend.database.db import db
 from backend.models.job_model import Jobs
-from backend.ai.llm_client import get_llm
+from backend.ai.llm_client import get_llm, handle_llm_error
+
 from backend.ai.prompt_template import job_description_prompt
 import json
 import re
@@ -95,9 +96,10 @@ def process_job_task(app, job_id, llm_config=None):
             else:
                 logging.warning(f"Failed to parse LLM response as JSON for job {job_id}")
         except Exception as e:
-            error_text = str(e)
+            error_text = handle_llm_error(e)
             logging.error(f"Immediate parse failed for job {job_id}: {error_text}")
             job.error_message = error_text
+
             db.session.commit()
             # The 2-minute worker will pick it up later as a fallback
 
@@ -162,9 +164,10 @@ def process_pending_jobs(app):
                                     time.sleep(60)
                             
                         except Exception as e:
-                            error_text = str(e)
+                            error_text = handle_llm_error(e)
                             logging.error(f"Error processing pending job {job.id}: {error_text}")
                             job.error_message = error_text
+
                             db.session.commit()
                             # On ANY error, we pause for 30s to be safe
                             break

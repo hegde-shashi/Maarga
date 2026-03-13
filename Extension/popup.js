@@ -779,9 +779,14 @@ async function fetchExistingJobForCurrentUrl() {
         displayJob(normalizedJob);
         
         if (normalizedJob.error_message) {
-            const shortError = normalizedJob.error_message.split('\n')[0];
-            setStatus(`Error: ${shortError}`, "warn");
+            // Split by real newline OR literal "\n" string, then take 1st part and cap at 120 chars
+            const shortError = String(normalizedJob.error_message)
+                .split(/\n|\\n/)[0]
+                .trim()
+                .substring(0, 120);
+            setStatus(`Error: ${shortError}${shortError.length >= 120 ? '...' : ''}`, "warn");
         } else {
+
 
             setStatus(normalizedJob.is_parsed ? "Job details loaded." : "Job already saved. AI is parsing...", "success");
         }
