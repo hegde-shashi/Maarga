@@ -166,8 +166,13 @@ def get_jobs():
     result = []
     for index, job in enumerate(jobs, start=1):
         # Fetch the latest analysis for this job to show match score if available
-        analysis = Analysis.query.filter_by(job_id=job.id).first()
-        match_score = analysis.score if analysis else None
+        try:
+            analysis = Analysis.query.filter_by(job_id=job.id).first()
+            match_score = analysis.score if analysis else None
+        except Exception as e:
+            # log warning but don't crash the whole page if one table column is missing
+            logging.warning(f"Failed to fetch analysis for job {job.id}: {e}")
+            match_score = None
 
         result.append({
             "ui_index": index,

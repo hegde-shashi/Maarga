@@ -45,17 +45,23 @@ def analyze_job():
         return jsonify({"error": "Please upload a resume first to analyze this job"}), 400
 
     # Check if analysis exists
-    existing = Analysis.query.filter_by(job_id=job_id).first()
+    try:
+        existing = Analysis.query.filter_by(job_id=job_id).first()
+    except Exception as e:
+        logging.warning(f"Could not query analysis table: {e}")
+        existing = None
     
     if existing:
         # Check if analysis is stale (compare with resume uploaded_at or created_at)
-        # Use whichever is newer or available
-        resume_time = resume.uploaded_at or resume.created_at
         is_stale = False
-        if resume_time and existing.created_at:
-            # Add a small buffer (e.g. 5 seconds) to avoid false positives during same-process execution
-            if resume_time > existing.created_at:
-                is_stale = True
+        try:
+            resume_time = resume.uploaded_at or resume.created_at
+            if resume_time and hasattr(existing, 'created_at') and existing.created_at:
+                if resume_time > existing.created_at:
+                    is_stale = True
+        except Exception as e:
+            logging.warning(f"Stale check failed (likely missing column): {e}")
+            is_stale = False
 
         if is_stale and not force_reanalyze:
             return jsonify({

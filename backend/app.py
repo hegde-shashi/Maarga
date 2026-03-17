@@ -26,6 +26,7 @@ from backend.routes.mail_routes import mail_bp
 from backend.routes.resume_generate_route import resume_gen_bp
 
 app = Flask(__name__)
+print("App Start - Version 1.0.3 - Migration Fix")
 
 
 # Very important: Enable CORS so frontend domain can talk to backend domain!
@@ -54,20 +55,29 @@ def check_migrations():
     from sqlalchemy import inspect, text
     inspector = inspect(db.engine)
     
+    print("Database Migration: STARTING...")
+    
     # helper for specific table migrations
     def safe_add_column(table_name, col_name, col_type_sql):
         try:
             if table_name in inspector.get_table_names():
-                columns = [c["name"].lower() for c in inspector.get_columns(table_name)]
+                columns_data = inspector.get_columns(table_name)
+                columns = [c["name"].lower() for c in columns_data]
+                
                 if col_name.lower() not in columns:
-                    print(f"Migration: Adding {col_name} to {table_name} table...")
-                    # Quote table name for safety (reserved words)
-                    quoted_table = f'"{table_name}"' if table_name in ("user", "users") else table_name
+                    print(f"Migration: Column {col_name} MISSING from {table_name}. Attempting to add...")
+                    # ALWAYS quote table name for safety against reserved words
+                    quoted_table = f'"{table_name}"'
                     db.session.execute(text(f'ALTER TABLE {quoted_table} ADD COLUMN {col_name} {col_type_sql}'))
                     db.session.commit()
-                    print(f"Successfully added {col_name} to {table_name}")
+                    print(f"Migration SUCCESS: Added {col_name} to {table_name}")
+                else:
+                    # Column already exists, log it occasionally or ignore
+                    pass
+            else:
+                print(f"Migration Warning: Table {table_name} not found in database.")
         except Exception as e:
-            print(f"Migration failed for {table_name}.{col_name}: {e}")
+            print(f"Migration Error on {table_name}.{col_name}: {e}")
             db.session.rollback()
 
     # User table migrations
@@ -83,29 +93,29 @@ def check_migrations():
     # Resume table migrations
     safe_add_column("resume", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
 
-    # Analysis table migrations
+    # Analysis table migrations (CRITICAL FIX)
     safe_add_column("analysis", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
 
     # Column type updates (mostly for Postgres)
     if "jobs" in inspector.get_table_names():
-        print("Migration: Ensuring job table columns are TEXT...")
         for col in ["job_title", "job_id", "company", "location", "job_type", "progress", "experience_required"]:
             try:
                 if "postgresql" in str(db.engine.url):
-                    db.session.execute(text(f'ALTER TABLE jobs ALTER COLUMN {col} TYPE TEXT'))
+                    db.session.execute(text(f'ALTER TABLE jobs ALTER COLUMN "{col}" TYPE TEXT'))
+                    db.session.commit()
             except Exception as e:
-                print(f"Migration warning on column {col}: {e}")
-        db.session.commit()
+                pass # Ignore if it fails on SQLite which doesn't support ALTER COLUMN
 
-    # Cleanup orphaned analysis records
+    # Cleanup orphaned records
     try:
         if "analysis" in inspector.get_table_names() and "jobs" in inspector.get_table_names():
-            print("Migration: Cleaning up orphaned analysis records...")
-            db.session.execute(text('DELETE FROM analysis WHERE job_id NOT IN (SELECT id FROM jobs)'))
+            db.session.execute(text('DELETE FROM "analysis" WHERE job_id NOT IN (SELECT id FROM "jobs")'))
             db.session.commit()
     except Exception as e:
         print(f"Cleanup error: {e}")
         db.session.rollback()
+
+    print("Database Migration: FINISHED.")
 
 
 
