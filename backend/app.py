@@ -120,12 +120,25 @@ def check_migrations():
 
 
 with app.app_context():
-    db.create_all()
-    try:
-        check_migrations()
-    except Exception as e:
-        print(f"Global Migration system error: {e}")
-        db.session.rollback()
+    # NUCLEAR OPTION: Recreate database if environment variable is set
+    # Useful for Azure environments where migrations are stuck or schema is corrupted.
+    if os.environ.get("RECREATE_DB") == "true":
+        print("!!! WARNING: RECREATE_DB is TRUE. Dropping all tables... !!!")
+        try:
+            db.drop_all()
+            db.create_all()
+            print("!!! Database tables RECREATED successfully !!!")
+        except Exception as e:
+            print(f"Failed to recreate database: {e}")
+            db.session.rollback()
+    else:
+        # Standard startup: Ensure tables exist then run surgical migrations
+        db.create_all()
+        try:
+            check_migrations()
+        except Exception as e:
+            print(f"Global Migration system error: {e}")
+            db.session.rollback()
 
 jwt = JWTManager(app)
 
