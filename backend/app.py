@@ -54,74 +54,58 @@ def check_migrations():
     from sqlalchemy import inspect, text
     inspector = inspect(db.engine)
     
-    # Check for missing columns in 'user' table
-    if "user" in inspector.get_table_names():
-        columns = [c["name"] for c in inspector.get_columns("user")]
-        
-        if "reset_token" not in columns:
-            print("Migration: Adding reset_token to user table...")
-            db.session.execute(text('ALTER TABLE "user" ADD COLUMN reset_token VARCHAR(255)'))
-            db.session.commit()
-            
-        if "reset_token_expiry" not in columns:
-            print("Migration: Adding reset_token_expiry to user table...")
-            # Use TIMESTAMP for Postgres, will work for SQLite too
-            db.session.execute(text('ALTER TABLE "user" ADD COLUMN reset_token_expiry TIMESTAMP'))
-            db.session.commit()
+    # helper for specific table migrations
+    def safe_add_column(table_name, col_name, col_type_sql):
+        try:
+            if table_name in inspector.get_table_names():
+                columns = [c["name"].lower() for c in inspector.get_columns(table_name)]
+                if col_name.lower() not in columns:
+                    print(f"Migration: Adding {col_name} to {table_name} table...")
+                    # Quote table name for safety (reserved words)
+                    quoted_table = f'"{table_name}"' if table_name in ("user", "users") else table_name
+                    db.session.execute(text(f'ALTER TABLE {quoted_table} ADD COLUMN {col_name} {col_type_sql}'))
+                    db.session.commit()
+                    print(f"Successfully added {col_name} to {table_name}")
+        except Exception as e:
+            print(f"Migration failed for {table_name}.{col_name}: {e}")
+            db.session.rollback()
 
-    # Check for missing columns in 'jobs' table
+    # User table migrations
+    safe_add_column("user", "reset_token", "VARCHAR(255)")
+    safe_add_column("user", "reset_token_expiry", "TIMESTAMP")
+
+    # Jobs table migrations
+    safe_add_column("jobs", "is_parsed", "BOOLEAN DEFAULT FALSE")
+    safe_add_column("jobs", "raw_content", "TEXT")
+    safe_add_column("jobs", "error_message", "TEXT")
+    safe_add_column("jobs", "retry_count", "INTEGER DEFAULT 0")
+
+    # Resume table migrations
+    safe_add_column("resume", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+
+    # Analysis table migrations
+    safe_add_column("analysis", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+
+    # Column type updates (mostly for Postgres)
     if "jobs" in inspector.get_table_names():
-        columns = [c["name"] for c in inspector.get_columns("jobs")]
-        
-        if "is_parsed" not in columns:
-            print("Migration: Adding is_parsed to jobs table...")
-            # Boolean in SQLite is 0/1, in Postgres it's BOOLEAN
-            db.session.execute(text('ALTER TABLE jobs ADD COLUMN is_parsed BOOLEAN DEFAULT FALSE'))
-            db.session.commit()
-            
-        if "raw_content" not in columns:
-            print("Migration: Adding raw_content to jobs table...")
-            db.session.execute(text('ALTER TABLE jobs ADD COLUMN raw_content TEXT'))
-            db.session.commit()
-
-        if "error_message" not in columns:
-            print("Migration: Adding error_message to jobs table...")
-            db.session.execute(text('ALTER TABLE jobs ADD COLUMN error_message TEXT'))
-            db.session.commit()
-
-        if "retry_count" not in columns:
-            print("Migration: Adding retry_count to jobs table...")
-            db.session.execute(text('ALTER TABLE jobs ADD COLUMN retry_count INTEGER DEFAULT 0'))
-            db.session.commit()
-
-        # Increase column sizes for existing tables (Postgres specifically needs this for TEXT/longer strings)
-        # SQLite ignores the size mostly, but Postgres enforces it.
         print("Migration: Ensuring job table columns are TEXT...")
         for col in ["job_title", "job_id", "company", "location", "job_type", "progress", "experience_required"]:
             try:
-                # Use a generic ALTER TABLE that works for both or check dialect
                 if "postgresql" in str(db.engine.url):
                     db.session.execute(text(f'ALTER TABLE jobs ALTER COLUMN {col} TYPE TEXT'))
-                # SQLite doesn't support ALTER COLUMN TYPE easily, but it usually doesn't need it as VARCHAR is same as TEXT
             except Exception as e:
                 print(f"Migration warning on column {col}: {e}")
         db.session.commit()
 
-
-    # Analysis Migrations
-    if "analysis" in inspector.get_table_names():
-        columns = [c["name"] for c in inspector.get_columns("analysis")]
-        if "created_at" not in columns:
-            print("Migration: Adding created_at to analysis table...")
-            db.session.execute(text('ALTER TABLE analysis ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP'))
-            db.session.commit()
-
     # Cleanup orphaned analysis records
-    if "analysis" in inspector.get_table_names() and "jobs" in inspector.get_table_names():
-        print("Migration: Cleaning up orphaned analysis records...")
-        db.session.execute(text('DELETE FROM analysis WHERE job_id NOT IN (SELECT id FROM jobs)'))
-        db.session.commit()
-
+    try:
+        if "analysis" in inspector.get_table_names() and "jobs" in inspector.get_table_names():
+            print("Migration: Cleaning up orphaned analysis records...")
+            db.session.execute(text('DELETE FROM analysis WHERE job_id NOT IN (SELECT id FROM jobs)'))
+            db.session.commit()
+    except Exception as e:
+        print(f"Cleanup error: {e}")
+        db.session.rollback()
 
 
 
@@ -130,7 +114,7 @@ with app.app_context():
     try:
         check_migrations()
     except Exception as e:
-        print(f"Migration error: {e}")
+        print(f"Global Migration system error: {e}")
         db.session.rollback()
 
 jwt = JWTManager(app)
