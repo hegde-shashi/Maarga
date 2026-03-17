@@ -120,25 +120,40 @@ def check_migrations():
 
 
 with app.app_context():
+    # EXPLICIT MODEL IMPORTS - Essential for db.create_all() to see them!
+    from backend.models.user_model import User
+    from backend.models.job_model import Jobs
+    from backend.models.resume_model import Resume
+    from backend.models.analysis_model import Analysis
+
     # NUCLEAR OPTION: Recreate database if environment variable is set
-    # Useful for Azure environments where migrations are stuck or schema is corrupted.
     if os.environ.get("RECREATE_DB") == "true":
-        print("!!! WARNING: RECREATE_DB is TRUE. Dropping all tables... !!!")
+        print("!!! WARNING: RECREATE_DB is TRUE. Dropping and recreating all tables... !!!")
         try:
             db.drop_all()
             db.create_all()
-            print("!!! Database tables RECREATED successfully !!!")
+            print("!!! Database tables RECREATED successfully from latest models !!!")
         except Exception as e:
             print(f"Failed to recreate database: {e}")
             db.session.rollback()
     else:
-        # Standard startup: Ensure tables exist then run surgical migrations
+        # Standard startup: Ensure tables exist
         db.create_all()
         try:
             check_migrations()
         except Exception as e:
             print(f"Global Migration system error: {e}")
             db.session.rollback()
+    
+    # FINAL VERIFICATION LOG (Visible in Azure logs)
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        if "analysis" in inspector.get_table_names():
+            cols = [c["name"] for c in inspector.get_columns("analysis")]
+            print(f"Database Schema Verified: Table 'analysis' has columns: {cols}")
+    except Exception:
+        pass
 
 jwt = JWTManager(app)
 
