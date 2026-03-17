@@ -157,6 +157,28 @@ with app.app_context():
 
 jwt = JWTManager(app)
 
+
+@jwt.user_lookup_loader
+def user_lookup_callback(_jwt_header, jwt_data):
+    """
+    Automatic user verification on every protected request.
+    If the user has been deleted from the DB, this returns None,
+    which triggers a 401 Unauthorized automatically.
+    """
+    from backend.models.user_model import User
+    try:
+        identity = jwt_data["sub"]
+        return User.query.get(int(identity))
+    except (ValueError, TypeError, Exception):
+        return None
+
+
+@jwt.unauthorized_loader
+@jwt.invalid_token_loader
+def unauthorized_callback(error_string):
+    """Return JSON for unauthorized/invalid requests so frontend can log out."""
+    return jsonify({"error": "Unauthorized", "details": str(error_string)}), 401
+
 app.register_blueprint(auth_bp)
 app.register_blueprint(job_bp)
 app.register_blueprint(resume_bp)
