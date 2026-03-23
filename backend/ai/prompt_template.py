@@ -53,31 +53,27 @@ def compare_prompt(resume, job_description):
 
 
             SCORING CRITERIA (Total = 100)
+            IMPORTANT: Each category score MUST NOT exceed its maximum weight.
 
-            1. Experience Match — 30%
-
+            1. Experience Match (Max: 30)
             * Compare the total years of experience required by the job with the candidate's total experience.
             * CRITICAL RULE: If the candidate has 2 or more years LESS experience than required (e.g., 3 years exp for a 5+ year role), this is a "Seniority Mismatch".
             * Handling Seniority Mismatch:
-                a) The Experience Match score MUST be low (0 to 5 out of 30) because the tenure requirement is not met.
-                b) SCORE CAP & FLEXIBILITY:
-                   - If the Job Description explicitly states that "Experience is not a limiting factor for exceptional talent." or similar flexible language: Do NOT apply a hard cap on the total score. Evaluate the candidate's Skills and Projects fairly; if they are truly exceptional, the total score can be high despite the low experience score. But the experience score should be low. Also the total score should not be more than 60.
-                   - If NO such flexible language exists: The TOTAL overall score (out of 100) MUST NOT exceed 30. This is a hard cap.
+                a) The Experience Match score MUST be low (0 to 5 out of 30).
+                b) SCORE CAP: If NO flexible language (like "Experience is not a limiting factor") exists in the JD, the TOTAL overall score MUST NOT exceed 40 (adjusting from 30 for better granularity).
 
-            2. Skills Match — 40%
+            2. Skills Match (Max: 40)
+            * Identify Core vs. Secondary Skills. 
+            * Prioritize weightage based on JD emphasis (frequency and importance).
+            * Evaluate the context of skills (proven application in experience vs just listed).
 
-            * DO NOT perform 1:1 keyword matching. Instead, identify the **Core vs. Secondary Skills** in the Job Description based on emphasis and frequency of mention.
-            * Prioritize weightage based on JD emphasis. For example, if SQL is mentioned as the "primary requirement" or appears three times, it is worth more than a skill mentioned once in a "nice to have" list.
-            * Missing a core/heavily-emphasized skill should result in a much larger score deduction than missing a secondary skill.
-            * Evaluate the *context* of skills: A skill listed in a "Skills" section is worth less than a skill proven through years of application in the "Experience" section.
+            3. Work / Project Relevance (Max: 20)
+            * Assess relevance of domain and responsibility.
+            * Evidence of applying tools in high-impact projects.
 
-            3. Work / Project Relevance — 20%
-
-            * Check Summary, Projects and Experience section for relevant skills.
-            * Look for specific evidence where the candidate applied the JD's most important skills in high-impact projects or previous roles.
-            * If the JD is for a Data Scientist role but the projects are purely Web Development, the score should be low even if the tech stack (e.g., Python) overlaps. Relevance of *domain* and *responsibility* is key.
-
-            4. Resume Quality — 10%
+            4. Resume Quality (Max: 10)
+            * Formatting, clarity, professional tone, and absence of errors.
+            * DO NOT give more than 10 points for this section. If it's perfect, it's 10/10.
 
             INPUT DATA
 
@@ -89,11 +85,13 @@ def compare_prompt(resume, job_description):
 
             OUTPUT FORMAT
                     Return ONLY valid JSON:
-                        "score": <number 0-100>,
+                        "score": <total_sum_of_categories (0-100)>,
                         "matched_skills": ["skill 1", "skill 2"],
                         "missing_skills": ["skill 1", "skill 2"],
                         "suggestions": ["suggestion 1", "suggestion 2"],
                         "evaluation_summary": "- **Experience Match (<score>/30):** <explanation>\\n- **Skill Match (<score>/40):** <explanation>\\n- **Work / Project Relevance (<score>/20):** <explanation>\\n- **Resume Quality (<score>/10):** <explanation>"
+            
+            STRICT RULE: The total 'score' MUST be the sum of the four category scores. Each category score MUST be within its specified range.
         """
     )
 

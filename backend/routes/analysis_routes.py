@@ -113,7 +113,11 @@ def analyze_job():
         match = re.search(r"\{.*\}", str(raw_content), re.DOTALL)
         parsed = json.loads(match.group()) if match else {}
 
-        score = parsed.get("score") or parsed.get("match_score") or parsed.get("Match Score") or parsed.get("matchScore") or 0
+        try:
+            score_raw = parsed.get("score") or parsed.get("match_score") or parsed.get("Match Score") or parsed.get("matchScore") or 0
+            score = int(score_raw) if str(score_raw).isdigit() else 0
+        except (ValueError, TypeError):
+            score = 0
         matched = parsed.get("matched_skills") or parsed.get("Matched Skills") or parsed.get("matchedSkills") or []
         missing = parsed.get("missing_skills") or parsed.get("Missing Skills") or parsed.get("missingSkills") or []
         suggestions = parsed.get("suggestions") or parsed.get("Suggestions") or []
